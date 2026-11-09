@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Reconciliation{% endblock %}
+{% block main %}
+<div class="page-head">
+  <div>
+    <h1>Reconciliation</h1>
+    <p class="muted">Do the books agree with the bank? Ledgerly compares every bank transaction with the ledger and explains each difference.</p>
+  </div>
+</div>
+
+<div id="recon">
+  <div class="card recon-start">
+    <div class="recon-illustration">
+      <div class="side"><i data-lucide="landmark"></i><span>Bank<br><small>{{ s.bank_feed | length }} transactions</small></span></div>
+      <div class="vs"><i data-lucide="arrow-left-right"></i></div>
+      <div class="side"><i data-lucide="book-open"></i><span>Ledger<br><small>{{ s.ledger | length }} entries</small></span></div>
+    </div>
+    <button class="btn primary big" data-run-recon hx-get="/reconciliation/run?steps=1" hx-target="#recon" hx-select="unset" hx-swap="innerHTML"
+            hx-indicator="#recon-progress">
+      <i data-lucide="play"></i> Run reconciliation
+    </button>
+    <div id="recon-progress" class="recon-progress">
+      <ol>
+        <li data-step="0"><i data-lucide="database"></i> Connecting to the data warehouse…</li>
+        <li data-step="1"><i data-lucide="download"></i> Loading {{ s.ledger | length }} ledger entries…</li>
+        <li data-step="2"><i data-lucide="landmark"></i> Loading {{ s.bank_feed | length }} bank transactions…</li>
+        <li data-step="3"><i data-lucide="git-compare"></i> Matching them up…</li>
+      </ol>
+      <div class="progress"><span></span></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

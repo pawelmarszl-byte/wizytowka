@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Bank statements{% endblock %}
+{% block main %}
+<div class="page-head">
+  <div>
+    <h1>Bank statements</h1>
+    <p class="muted">Daily statements from Harbor Bank. Pick one to see what Ledgerly read from the PDF and how it suggests booking it.</p>
+  </div>
+  <button class="btn" hx-post="/statements/fetch" hx-target="#statement-list" hx-select="unset" hx-swap="innerHTML"
+          hx-disabled-elt="this" hx-indicator="this">
+    <i data-lucide="refresh-cw" class="spin-on-request"></i> <span>Check for new statements</span>
+  </button>
+</div>
+
+<div class="split">
+  <div class="card list-card">
+    <div id="statement-list" hx-get="/statements/list?selected={{ selected }}" hx-trigger="every 8s, statements-changed from:body"
+         hx-target="this" hx-select="unset" hx-swap="innerHTML">
+      {% include "partials/statement_list.html" %}
+    </div>
+  </div>
+
+  <div id="statement-detail" class="detail" hx-get="/statements/{{ selected }}" hx-trigger="load" hx-target="this" hx-select="unset" hx-swap="innerHTML">
+    {% include "partials/loading_detail.html" %}
+  </div>
+</div>
+{% endblock %}

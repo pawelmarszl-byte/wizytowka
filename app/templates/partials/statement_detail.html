@@ -1,0 +1,122 @@
+{% set gap = parsed.gap %}
+<div class="card detail-card" data-detail="{{ st.number }}">
+  <div class="detail-head">
+    <div>
+      <span class="eyebrow">Statement {{ st.code }} · {{ st.day.strftime("%A, %d %B %Y") }}</span>
+      <h2>{{ lines | length }} transaction{{ 's' if lines|length != 1 }} read from the PDF</h2>
+    </div>
+    <div class="detail-actions">
+      <a class="btn small" href="/statements/{{ st.number }}/pdf" target="_blank" rel="noopener" hx-boost="false"
+         hx-on:click="htmx.trigger(document.body, 'refresh-missions')">
+        <i data-lucide="file-text"></i> View original PDF
+      </a>
+      <a class="btn small ghost" href="/statements/{{ st.number }}/pdf?download=1" hx-boost="false" title="Download PDF" aria-label="Download PDF"
+         hx-on:click="htmx.trigger(document.body, 'refresh-missions')">
+        <i data-lucide="download"></i>
+      </a>
+    </div>
+  </div>
+
+  {# ---------- Check: does the statement add up? ---------- #}
+  <div class="check {{ 'ok' if gap == 0 and not parsed.unreadable else 'bad' }}">
+    <div class="check-math">
+      <div><small>Opening balance</small><b>{{ parsed.opening | money }}</b></div>
+      <span class="op">+</span>
+      <div><small>Lines read</small><b>{{ parsed.parsed_total | money(true) }}</b></div>
+      <span class="op">=</span>
+      <div><small>Should close at</small><b>{{ (parsed.opening + parsed.parsed_total) | money }}</b></div>
+      <span class="op">{{ '=' if gap == 0 else '≠' }}</span>
+      <div><small>Bank says</small><b>{{ parsed.closing | money }}</b></div>
+    </div>
+    {% if gap == 0 and not parsed.unreadable %}
+      <p class="check-msg"><i data-lucide="badge-check"></i> The statement adds up - every transaction was read correctly.</p>
+    {% else %}
+      <p class="check-msg"><i data-lucide="triangle-alert"></i> <span>The numbers don't add up: <b>{{ gap | money(true) }}</b> is missing. One line on this PDF is printed in an old format Ledgerly couldn't read. Posting is blocked until it's fixed - no half-read statement ever reaches the books.</span></p>
+    {% endif %}
+  </div>
+
+  {% if parsed.unreadable and status != "posted" %}
+    {% for raw in parsed.unreadable %}
+      <form class="repair" hx-post="/statements/{{ st.number }}/repair" hx-target="#statement-detail" hx-select="unset" hx-swap="innerHTML">
+        <div class="repair-head"><i data-lucide="wrench"></i> <strong>Help Ledgerly read this line</strong></div>
+        <code class="raw">{{ raw }}</code>
+        <p class="muted small">Compare with the PDF: <em>DR</em> means money going out, <em>CR</em> money coming in. Type the amount as a normal number.</p>
+        <input type="hidden" name="raw" value="{{ raw }}">
+        <div class="repair-row">
+          <label>Amount (€)<input name="amount" inputmode="decimal" placeholder="e.g. 1240.00" required autocomplete="off"></label>
+          <label>Direction
+            <select name="direction"><option value="out">Money out (DR)</option><option value="in">Money in (CR)</option></select>
+          </label>
+          <button class="btn primary"><i data-lucide="check"></i> Add the line</button>
+        </div>
+        {% if repair_failed %}<p class="field-error"><i data-lucide="circle-x"></i> With that amount the statement still doesn't add up. The gap is exactly {{ (-gap) | money }} - does that help?</p>{% endif %}
+      </form>
+    {% endfor %}
+  {% endif %}
+
+  {# ---------- Lines ---------- #}
+  <div class="table-wrap">
+    <table class="lines">
+      <thead><tr><th>Description</th><th class="num">Amount</th><th>Book to account</th></tr></thead>
+      <tbody>
+      {% for l in lines %}
+        <tr class="{{ 'needs' if l.needs_decision }} {{ 'manual' if l.manual }}">
+          <td>
+            <span class="desc">{{ l.description }}</span>
+            <small class="ref">{{ l.ref }}{% if l.manual %} · <i data-lucide="pencil"></i> entered by you{% endif %}</small>
+            {% if l.needs_decision %}
+              <small class="why warn"><i data-lucide="circle-help"></i> No rule recognised this line - please choose an account.</small>
+              {% if l.hint %}<small class="why tip"><i data-lucide="lightbulb"></i> {{ l.hint }}</small>{% endif %}
+            {% elif l.chosen and not l.suggestion.confident %}
+              <small class="why ok"><i data-lucide="user-check"></i> Account chosen by you</small>
+            {% else %}
+              <small class="why">{{ l.suggestion.explanation }}</small>
+            {% endif %}
+          </td>
+          <td class="num {{ 'in' if l.amount > 0 else 'out' }}">{{ l.amount | money(true) }}</td>
+          <td>
+            {% if status == "posted" %}
+              <span class="acct">{{ l.account }} · {{ ACCOUNTS[l.account] }}</span>
+            {% else %}
+              <select class="acct-select {{ 'attention' if l.needs_decision }}" name="account" aria-label="Account for {{ l.description }}"
+                      hx-post="/statements/{{ st.number }}/account" hx-vals='{"ref": "{{ l.ref }}"}'
+                      hx-target="#statement-detail" hx-select="unset" hx-swap="innerHTML" hx-trigger="change">
+                {% for code, name in POSTABLE.items() %}
+                  <option value="{{ code }}" {{ 'selected' if code == l.account }}>{{ code }} · {{ name }}</option>
+                {% endfor %}
+              </select>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# ---------- Footer action ---------- #}
+  <div class="detail-foot">
+    {% if status == "posted" %}
+      <p class="posted-msg"><i data-lucide="circle-check"></i> Posted to the ledger. The reconciliation now includes these entries.</p>
+      <div class="foot-actions">
+        <button class="btn ghost" hx-post="/statements/{{ st.number }}/unpost" hx-target="#statement-detail" hx-select="unset" hx-swap="innerHTML">
+          <i data-lucide="undo-2"></i> Undo posting
+        </button>
+        <a class="btn" href="/reconciliation">Check the reconciliation <i data-lucide="arrow-right"></i></a>
+      </div>
+    {% elif status == "blocked" %}
+      <p class="muted">Fix the unreadable line above to unlock posting.</p>
+      <button class="btn primary" disabled><i data-lucide="lock"></i> Post to ledger</button>
+    {% elif status == "review" %}
+      <p class="muted">Choose an account for the highlighted line{{ 's' if (lines | selectattr('needs_decision') | list | length) > 1 }}.</p>
+      <button class="btn primary" disabled><i data-lucide="lock"></i> Post to ledger</button>
+    {% else %}
+      <p class="muted">Everything looks right. Posting creates {{ lines | length }} ledger entries against account 1010 (bank).</p>
+      <button class="btn primary big" hx-post="/statements/{{ st.number }}/post" hx-target="#statement-detail" hx-select="unset" hx-swap="innerHTML"
+              hx-disabled-elt="this" hx-indicator="this">
+        <i data-lucide="send" class="hide-on-request"></i><i data-lucide="loader-circle" class="show-on-request spin"></i>
+        <span class="hide-on-request">Post to ledger</span><span class="show-on-request">Sending to ERP…</span>
+      </button>
+    {% endif %}
+  </div>
+</div>
+<script>window.Ledgerly && Ledgerly.markSelected({{ st.number }})</script>

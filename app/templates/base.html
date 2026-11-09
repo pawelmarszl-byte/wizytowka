@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Ledgerly{% endblock %} · Ledgerly demo</title>
+  <meta name="description" content="Ledgerly - a portfolio demo of a finance back-office tool: reads bank statement PDFs, posts them to the ledger and reconciles the books. All data is fictional.">
+  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script>
+    try { const t = localStorage.getItem("ledgerly-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <script src="/static/vendor/htmx.min.js" defer></script>
+  <script src="/static/vendor/lucide.min.js" defer></script>
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body hx-boost="true" hx-target="#main" hx-select="#main" hx-swap="outerHTML show:window:top">
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="/demo">
+        {% include "partials/logo.html" %}
+        <span class="brand-name">Ledgerly</span>
+      </a>
+      <nav class="nav" id="nav">
+        {% set nav = [
+          ("dashboard", "/demo", "layout-dashboard", "Overview"),
+          ("statements", "/statements", "file-text", "Bank statements"),
+          ("reconciliation", "/reconciliation", "scale", "Reconciliation"),
+          ("about", "/about", "info", "How it works"),
+        ] %}
+        {% for key, href, icon, label in nav %}
+          <a href="{{ href }}" class="nav-item {% if page == key %}active{% endif %}" data-nav="{{ key }}">
+            <i data-lucide="{{ icon }}"></i><span>{{ label }}</span>
+          </a>
+        {% endfor %}
+      </nav>
+      <div id="missions" class="missions" hx-get="/missions" hx-trigger="statements-changed from:body, sources-changed from:body, refresh-missions from:body" hx-target="this" hx-select="unset" hx-swap="innerHTML">
+      {% include "partials/missions.html" %}
+      </div>
+      <div class="sidebar-foot">
+        <a class="author-card" href="/" hx-boost="false">
+          <img src="/static/img/author-520.webp" width="36" height="36" alt="">
+          <div><strong>Built by Paweł Marszałek</strong><small>About the author →</small></div>
+        </a>
+        <div class="company">
+          <span class="company-mark">LD</span>
+          <div><strong>Ledgerly Demo Ltd.</strong><small>{{ m.label }} · EUR</small></div>
+        </div>
+        <button class="btn ghost small" hx-post="/reset" hx-confirm="Start the demo again from scratch?" hx-swap="none">
+          <i data-lucide="rotate-ccw"></i> Reset demo
+        </button>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <div class="demo-pill"><i data-lucide="flask-conical"></i> Demo - all data is fictional</div>
+        <div class="topbar-actions">
+          <button class="icon-btn" type="button" data-open-welcome title="Show the introduction" aria-label="Show the introduction">
+            <i data-lucide="circle-help"></i>
+          </button>
+          <button class="icon-btn" type="button" data-theme-toggle title="Light / dark mode" aria-label="Toggle light or dark mode">
+            <i data-lucide="moon" class="only-light"></i><i data-lucide="sun" class="only-dark"></i>
+          </button>
+        </div>
+      </header>
+
+      {% block main_wrapper %}
+      <main id="main" class="main" data-page="{{ page }}">
+        {% block main %}{% endblock %}
+      </main>
+      {% endblock %}
+
+      <footer id="status-bar" class="status-bar" hx-get="/status-bar" hx-trigger="every 5s, sources-changed from:body, statements-changed from:body" hx-target="this" hx-select="unset" hx-swap="innerHTML">
+        {% include "partials/status_bar.html" %}
+      </footer>
+    </div>
+  </div>
+
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <dialog id="welcome" class="welcome">
+    <div class="welcome-body">
+      <div class="welcome-logo">{% include "partials/logo.html" %}</div>
+      <h2>Welcome to Ledgerly</h2>
+      <p class="lead">A small finance back-office tool. Every company has to prove that <strong>its books match its bank account</strong>.
+        Ledgerly does the boring part.</p>
+      <ol class="welcome-steps">
+        <li><i data-lucide="file-down"></i><div><strong>Bank statements arrive as PDFs.</strong> Ledgerly reads them and suggests how to book every line.</div></li>
+        <li><i data-lucide="check-check"></i><div><strong>You approve the bookings</strong> - one click sends them to the ledger.</div></li>
+        <li><i data-lucide="scale"></i><div><strong>Reconciliation compares bank vs. books</strong> and explains every difference in plain English.</div></li>
+      </ol>
+      <p class="muted small">The bank, the company and every number are made up. Nothing you do here is saved - feel free to break things.</p>
+      <p class="muted small welcome-by">Built by Paweł Marszałek · <a href="/" hx-boost="false">about the author</a></p>
+      <form method="dialog"><button class="btn primary big" autofocus>Let me click around <i data-lucide="arrow-right"></i></button></form>
+    </div>
+  </dialog>
+</body>
+</html>

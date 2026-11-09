@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Paweł Marszałek · Finance & Process Automation</title>
+  <meta name="description" content="Paweł Marszałek - accountant who writes code. Eight years in accounting operations, building the software that automates the repetitive parts. Includes Ledgerly, a live demo.">
+  <meta property="og:title" content="Paweł Marszałek · Finance & Process Automation">
+  <meta property="og:description" content="Accountant by trade, developer by habit. Try Ledgerly, a live demo of bank reconciliation software.">
+  <meta property="og:image" content="/static/img/author-960.jpg">
+  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="/static/img/author-960.webp" type="image/webp">
+  <link rel="stylesheet" href="/static/css/home.css">
+  <script>
+    try { const t = localStorage.getItem("ledgerly-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="topbar wrap">
+    <a class="mono-mark" href="/" aria-label="Paweł Marszałek, home">PM</a>
+    <nav class="topnav" aria-label="Sections">
+      <a href="#work">Work</a>
+      <a href="#path">Path</a>
+      <a href="#toolbox">Toolbox</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="topbar-end">
+      <button class="theme-btn" type="button" id="theme-toggle" aria-label="Switch light or dark mode">
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="btn btn-ink small" href="/demo">Live demo <span aria-hidden="true">→</span></a>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================================================ hero -->
+    <section class="hero wrap">
+      <div class="hero-text">
+        <p class="eyebrow load" style="--d: 0">Paweł Marszałek · Warsaw</p>
+        <h1 class="load" style="--d: 1">Accountant by trade,<br>
+          <span class="pencil">developer
+            <svg viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 16 C 60 8, 140 6, 200 11 S 280 18, 296 9"/></svg>
+          </span> by habit.</h1>
+        <p class="lede load" style="--d: 2">For eight years I've worked in accounting operations: reconciliations, payment runs,
+          month-end close. Along the way I started writing the software that does the repetitive parts.</p>
+        <div class="hero-actions load" style="--d: 3">
+          <a class="btn btn-green" href="/demo">Try Ledgerly, my live demo <span aria-hidden="true">→</span></a>
+          <a class="btn btn-line" href="https://www.linkedin.com/in/pawel-marszalek-02928b98" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="i-fill"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4V21H3V9.75Zm6.5 0h3.8v1.6h.06c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.77 2.65 4.77 6.1V21h-4v-4.9c0-1.17-.02-2.68-1.63-2.68-1.64 0-1.89 1.28-1.89 2.6V21h-4V9.75Z"/></svg>
+            LinkedIn
+          </a>
+        </div>
+      </div>
+
+      <figure class="hero-photo load" style="--d: 1.5">
+        <picture>
+          <source srcset="/static/img/author-520.webp 520w, /static/img/author-960.webp 960w" sizes="(max-width: 860px) 80vw, 440px" type="image/webp">
+          <img src="/static/img/author-960.jpg" width="960" height="960" alt="Portrait of Paweł Marszałek">
+        </picture>
+        <figcaption class="entry" aria-label="A journal entry: repetitive work debited, automation credited, difference zero">
+          <div class="entry-head"><span>Journal entry</span><span>2018 → today</span></div>
+          <div class="entry-row"><span class="dc">Dr</span><span>Repetitive work</span></div>
+          <div class="entry-row"><span class="dc">Cr</span><span>Python · SQL · VBA · JS</span></div>
+          <div class="entry-foot"><span>Difference</span><span class="ok">0.00 <b>✓</b></span></div>
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================ figures -->
+    <section class="figures wrap" aria-label="In numbers">
+      <p><b>8+</b> years in accounting operations</p>
+      <p><b>5</b> companies, 2 countries</p>
+      <p><b>5</b> ERP systems in daily use</p>
+      <p><b>4</b> languages of code</p>
+    </section>
+
+    <!-- ============================================================ featured work -->
+    <section class="work wrap" id="work">
+      <div class="section-head reveal">
+        <p class="eyebrow">Featured work</p>
+        <h2>Ledgerly: bank statements in, reconciled books out.</h2>
+        <p class="section-lede">A public rewrite of an internal tool I built for my own work, made from scratch with
+          invented data so anyone can try it. No login, nothing to install.</p>
+      </div>
+
+      <div class="work-grid">
+        <a class="shot reveal" href="/demo" aria-label="Open the Ledgerly live demo">
+          <span class="shot-bar">
+            <span class="ledgerly-mark">{% include "partials/logo.html" %}</span>
+            <span>ledgerly / bank statements</span>
+            <span class="shot-open">Open demo →</span>
+          </span>
+          <img src="/static/img/ledgerly-statements.webp" width="1400" height="875" loading="lazy"
+               alt="Ledgerly screen: a bank statement that doesn't add up, with posting blocked until the unreadable line is fixed">
+        </a>
+
+        <ol class="steps reveal">
+          <li>
+            <span class="step-n">1</span>
+            <div><h3>Reads the bank's PDF statements</h3>
+              <p>And checks that each one adds up: opening balance plus every line must equal the closing balance.
+                If a line can't be read, posting stops.</p></div>
+          </li>
+          <li>
+            <span class="step-n">2</span>
+            <div><h3>Suggests how to book every line</h3>
+              <p>Payroll goes to wages, a customer payment clears an invoice. Lines it doesn't recognise wait for a
+                person to decide.</p></div>
+          </li>
+          <li>
+            <span class="step-n">3</span>
+            <div><h3>Explains every difference in plain English</h3>
+              <p>The books are compared with the bank line by line. A payment booked twice or two swapped digits get
+                found, explained and fixed with a correcting entry.</p></div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="work-foot reveal">
+        <img class="chart-peek" src="/static/img/ledgerly-chart.webp" width="1200" height="690" loading="lazy"
+             alt="Ledgerly chart comparing the bank balance and the ledger balance day by day">
+        <div class="work-foot-text">
+          <p class="note">Five minutes is enough: open a statement PDF, post one to the ledger, fix the four planted
+            bookkeeping mistakes, then switch off the data warehouse and see what happens.</p>
+          <a class="btn btn-green" href="/demo">Open the live demo <span aria-hidden="true">→</span></a>
+          <p class="tech">Python · FastAPI · HTMX · server-drawn SVG charts · real PDF parsing · automated tests</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ what I bring -->
+    <section class="bring wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">What I bring</p>
+        <h2>Someone who understands the ledger and can also change the tools around it.</h2>
+      </div>
+      <dl class="bring-list">
+        <div class="reveal"><dt>Accounting first</dt>
+          <dd>General ledger and subledger reconciliations, bank and broker matching, AP and AR, month-end close,
+            SOX controls and audit support.</dd></div>
+        <div class="reveal"><dt>Automation that gets used</dt>
+          <dd>Python tools, SQL Server queries, VBA macros and scripts that run inside the ERP. Built for real
+            colleagues and used every day.</dd></div>
+        <div class="reveal"><dt>Finance and IT in one person</dt>
+          <dd>I can talk to a controller and to a developer, so requirements don't get lost between the two.</dd></div>
+        <div class="reveal"><dt>Used to international teams</dt>
+          <dd>Shared-service centres and multinational teams in Poland and the Netherlands, working in English.</dd></div>
+      </dl>
+    </section>
+
+    <!-- ============================================================ path -->
+    <section class="path wrap" id="path">
+      <div class="section-head reveal">
+        <p class="eyebrow">The path</p>
+        <h2>Every role taught me a process. Most of them ended with a script.</h2>
+      </div>
+
+      <div class="ledger reveal" role="table" aria-label="Career, most recent first">
+        <div class="ledger-row ledger-head" role="row">
+          <span role="columnheader">Period</span>
+          <span role="columnheader">Role</span>
+          <span role="columnheader">Automated</span>
+        </div>
+        <div class="ledger-row" role="row">
+          <span class="when" role="cell">12.2025 – now</span>
+          <span role="cell"><b>Subledger Data Analyst</b><small>Fintech, Warsaw</small>
+            <em>Subledger-to-GL and multi-currency broker reconciliations.</em></span>
+          <span class="auto" role="cell">An internal reconciliation panel in Python and SQL. Ledgerly is its public cousin.</span>
+        </div>
+        <div class="ledger-row" role="row">
+          <span class="when" role="cell">04.2025 – 11.2025</span>
+          <span role="cell"><b>AP Accountant</b><small>Bausch &amp; Lomb, Warsaw</small>
+            <em>Invoice posting, payment runs and vendor reconciliations in PeopleSoft.</em></span>
+          <span class="auto" role="cell">JavaScript userscripts that fill in PeopleSoft forms on their own.</span>
+        </div>
+        <div class="ledger-row" role="row">
+          <span class="when" role="cell">08.2021 – 03.2025</span>
+          <span role="cell"><b>AP Coordinator</b><small>Foot Locker, Utrecht (NL)</small>
+            <em>Procure-to-pay across European entities, accruals, audit questions.</em></span>
+          <span class="auto" role="cell">SQL Server reports on volumes, ageing and reconciliation status.</span>
+        </div>
+        <div class="ledger-row" role="row">
+          <span class="when" role="cell">07.2019 – 07.2021</span>
+          <span role="cell"><b>Accounts Payable Specialist</b><small>CBRE, Warsaw</small>
+            <em>Vendor reconciliations and multi-currency payments for international clients.</em></span>
+          <span class="auto learned" role="cell">Learned SOX controls and how to prepare for an audit.</span>
+        </div>
+        <div class="ledger-row" role="row">
+          <span class="when" role="cell">04.2018 – 07.2019</span>
+          <span role="cell"><b>Accounts Receivable Analyst</b><small>Accenture, Warsaw</small>
+            <em>Bank and customer reconciliations, cash application.</em></span>
+          <span class="auto learned" role="cell">Where the reconciliation habit began.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ toolbox + side projects -->
+    <section class="toolbox wrap" id="toolbox">
+      <div class="section-head reveal">
+        <p class="eyebrow">Toolbox</p>
+        <h2>Systems I've worked in and things I build with.</h2>
+      </div>
+
+      <div class="tool-grid">
+        <div class="tool-group reveal">
+          <h3>Finance systems (ERP)</h3>
+          <p class="tool-hint">Where the general ledger, invoices and payments live.</p>
+          <ul><li>SAP</li><li>Microsoft Dynamics AX</li><li>PeopleSoft</li><li>Oracle</li><li>Comarch</li></ul>
+        </div>
+        <div class="tool-group reveal">
+          <h3>Expense &amp; service tools</h3>
+          <p class="tool-hint">Travel expenses, company cards, support tickets.</p>
+          <ul><li>SAP Concur</li><li>Zendesk</li><li>Pleo</li><li>Spendesk</li></ul>
+        </div>
+        <div class="tool-group reveal">
+          <h3>Code &amp; data</h3>
+          <p class="tool-hint">What the automations are written in.</p>
+          <ul><li>Python</li><li>SQL Server / T-SQL</li><li>VBA</li><li>JavaScript</li><li>FastAPI</li><li>HTMX</li><li>Streamlit</li><li>Selenium</li><li>Git</li></ul>
+        </div>
+        <div class="tool-group reveal">
+          <h3>AI &amp; documents</h3>
+          <p class="tool-hint">Getting data out of PDFs and scans.</p>
+          <ul><li>LLMs (Claude, Gemini)</li><li>OCR / IDP</li></ul>
+        </div>
+      </div>
+
+      <div class="side reveal">
+        <h3 class="side-title">Other things I've built</h3>
+        <div class="side-grid">
+          <article>
+            <h4>DataNoter</h4>
+            <p>Pulls structured data out of complex legal and financial documents using OCR and language models.
+              Python and Streamlit.</p>
+          </article>
+          <article>
+            <h4>Vetonco CRM</h4>
+            <p>A workflow tool that sorts incoming documents, routes the data and schedules reports using AI APIs.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ beyond -->
+    <section class="beyond wrap reveal">
+      <div>
+        <p class="eyebrow">Off the clock</p>
+        <p class="beyond-big">Chess, ski touring, climbing, squash and gravel cycling.</p>
+      </div>
+      <dl class="beyond-facts">
+        <div><dt>Languages</dt><dd>Polish (native), English (C1), Russian (A2)</dd></div>
+        <div><dt>Education</dt><dd>MA International Relations, University of Malta · MA Eurasian Studies, University of
+          Warsaw · BA Political Science and BA Journalism, University of Wrocław</dd></div>
+        <div><dt>Why it matters</dt><dd>Four degrees in the humanities taught me to explain complicated things simply,
+          which helps every time finance meets IT.</dd></div>
+      </dl>
+    </section>
+
+    <!-- ============================================================ contact -->
+    <section class="contact" id="contact">
+      <div class="wrap contact-inner reveal">
+        <h2>Got a process that eats your month-end?</h2>
+        <p>Tell me about it. I'm open to roles in finance automation, record-to-report and subledger operations.</p>
+        <div class="contact-actions">
+          <a class="btn btn-paper" href="https://www.linkedin.com/in/pawel-marszalek-02928b98" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="i-fill"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4V21H3V9.75Zm6.5 0h3.8v1.6h.06c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.77 2.65 4.77 6.1V21h-4v-4.9c0-1.17-.02-2.68-1.63-2.68-1.64 0-1.89 1.28-1.89 2.6V21h-4V9.75Z"/></svg>
+            Message me on LinkedIn
+          </a>
+          <div class="email">
+            <a href="mailto:pawelmarszalek@g.pl" id="email-text">pawelmarszalek@g.pl</a>
+            <button type="button" id="copy-email" class="copy-btn">Copy</button>
+          </div>
+        </div>
+      </div>
+      <footer class="wrap foot">
+        <span>© <span id="year">2026</span> Paweł Marszałek</span>
+        <span>This site and Ledgerly are built with Python, FastAPI and HTMX. All demo data is fictional.</span>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      document.getElementById("theme-toggle").addEventListener("click", function () {
+        var dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        root.dataset.theme = dark ? "light" : "dark";
+        try { localStorage.setItem("ledgerly-theme", root.dataset.theme); } catch (e) {}
+      });
+      var btn = document.getElementById("copy-email");
+      btn.addEventListener("click", function () {
+        var text = document.getElementById("email-text").textContent;
+        var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1800); };
+        var fallback = function () {
+          var r = document.createRange(); r.selectNodeContents(document.getElementById("email-text"));
+          var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected";
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+      });
+      document.getElementById("year").textContent = new Date().getFullYear();
+    })();
+  </script>
+</body>
+</html>

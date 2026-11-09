@@ -1,0 +1,24 @@
+{% set labels = {"posted": ("Posted", "check"), "ready": ("Ready to post", "circle-dot"), "review": ("Needs a decision", "circle-help"), "blocked": ("Doesn't add up", "triangle-alert")} %}
+<ul class="stmt-list" role="list">
+  {% for st in s.statements | reverse %}
+    {% set status = s.status(st.number) %}
+    <li>
+      <button class="stmt {{ 'selected' if selected == st.number }} {{ 'fresh' if st.number > m.initially_received and status != 'posted' }}"
+              hx-get="/statements/{{ st.number }}" hx-target="#statement-detail" hx-select="unset" hx-swap="innerHTML"
+              hx-indicator="#statement-detail" data-stmt="{{ st.number }}">
+        <span class="stmt-main">
+          <span class="stmt-code">{{ st.code }}</span>
+          <span class="stmt-date">{{ st.day.strftime("%a, %d %b") }} · {{ st.transactions | length }} lines</span>
+        </span>
+        <span class="badge status-{{ status }}"><i data-lucide="{{ labels[status][1] }}"></i> {{ labels[status][0] }}</span>
+      </button>
+    </li>
+  {% endfor %}
+</ul>
+{% if s.received < s.total_statements %}
+  {% if s.inbox_full %}
+    <p class="list-foot muted small"><i data-lucide="pause"></i> {{ s.waiting }} statements to check. Post one and the next will arrive.</p>
+  {% else %}
+    <p class="list-foot muted small"><i data-lucide="clock"></i> The next statement arrives shortly.</p>
+  {% endif %}
+{% endif %}

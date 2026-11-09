@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block main %}
+<div class="page-head">
+  <div>
+    <h1>Good morning 👋</h1>
+    <p class="muted">Here's where the month-end close of <strong>{{ m.label }}</strong> stands.</p>
+  </div>
+</div>
+
+<section class="tiles">
+  <a class="tile" href="/statements">
+    <span class="tile-label"><i data-lucide="inbox"></i> Waiting to be posted</span>
+    {% set waiting = counts.ready + counts.review + counts.blocked %}
+    <span class="tile-value">{{ waiting }}</span>
+    <span class="tile-sub">{% if waiting %}bank statement{{ 's' if waiting != 1 }} - {% if counts.blocked %}{{ counts.blocked }} need{{ 's' if counts.blocked == 1 }} repair{% else %}ready to review{% endif %}{% else %}all caught up{% endif %}</span>
+    <span class="tile-go">Open statements <i data-lucide="arrow-right"></i></span>
+  </a>
+  <a class="tile" href="/reconciliation">
+    <span class="tile-label"><i data-lucide="triangle-alert"></i> Bookkeeping mistakes</span>
+    {% if rec %}
+      <span class="tile-value {{ 'bad' if rec.problems else 'good' }}">{{ rec.problems | length }}</span>
+      <span class="tile-sub">{% if rec.problems %}worth {{ rec.problem_total | money }} in total{% else %}the ledger agrees with the bank{% endif %}</span>
+    {% else %}
+      <span class="tile-value muted">-</span>
+      <span class="tile-sub">data warehouse offline</span>
+    {% endif %}
+    <span class="tile-go">Run reconciliation <i data-lucide="arrow-right"></i></span>
+  </a>
+  <div class="tile static">
+    <span class="tile-label"><i data-lucide="landmark"></i> Bank balance today</span>
+    <span class="tile-value">{{ s.statements[-1].closing | money }}</span>
+    <span class="tile-sub">Harbor Bank · statement {{ s.statements[-1].code }}</span>
+  </div>
+  <div class="tile static">
+    <span class="tile-label"><i data-lucide="gauge"></i> Close progress</span>
+    {% set pct = (s.posted | length / s.total_statements * 100) | round | int %}
+    <span class="tile-value">{{ pct }}%</span>
+    <div class="progress"><span style="width: {{ pct }}%"></span></div>
+    <span class="tile-sub">{{ s.posted | length }} of {{ s.total_statements }} working days booked</span>
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <h2><i data-lucide="route"></i> How the month-end close works</h2>
+    </div>
+    <ol class="flow">
+      <li>
+        <span class="flow-icon"><i data-lucide="file-down"></i></span>
+        <div><strong>Statements arrive</strong><p>Every working day the bank sends a PDF. Three are waiting for you, and one more arrives while you click around.</p></div>
+      </li>
+      <li>
+        <span class="flow-icon"><i data-lucide="scan-text"></i></span>
+        <div><strong>Ledgerly reads the PDF</strong><p>Each line gets a suggested account - "Payroll" goes to wages, "Payment from…" clears a customer invoice.</p></div>
+      </li>
+      <li>
+        <span class="flow-icon"><i data-lucide="check-check"></i></span>
+        <div><strong>You approve and post</strong><p>One click sends the entries to the ledger. Unusual lines wait for a human decision.</p></div>
+      </li>
+      <li>
+        <span class="flow-icon"><i data-lucide="scale"></i></span>
+        <div><strong>Reconcile</strong><p>The ledger is compared with the bank line by line; every difference is explained and can be fixed.</p></div>
+      </li>
+    </ol>
+    <a class="btn primary" href="/statements">Start with the statements <i data-lucide="arrow-right"></i></a>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><i data-lucide="activity"></i> Activity</h2>
+      <span class="live"><span class="live-dot"></span> live</span>
+    </div>
+    <div hx-get="/activity" hx-trigger="every 6s" hx-target="this" hx-select="unset" hx-swap="innerHTML">
+      {% include "partials/activity.html" %}
+    </div>
+  </div>
+</section>
+{% endblock %}

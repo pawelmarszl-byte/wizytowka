@@ -1,0 +1,18 @@
+<div class="status-left">
+  <span class="status-text"><i data-lucide="file-text"></i> {{ s.received }} of {{ s.total_statements }} statements received · {{ s.posted | length }} posted</span>
+  {% if s.received < s.total_statements and s.inbox_full %}
+    <span class="status-text muted next-arrival"><i data-lucide="pause"></i> {{ s.waiting }} waiting - post one to receive the next</span>
+  {% elif s.received < s.total_statements and s.is_online("bank") %}
+    <span class="status-text muted next-arrival" data-countdown="{{ (s.next_arrival - s.clock()) | int }}">next one in <b>{{ (s.next_arrival - s.clock()) | int }}</b>s</span>
+  {% endif %}
+</div>
+<div class="status-sources">
+  {% for key, (name, purpose) in SOURCES.items() %}
+    {% set on = s.is_online(key) %}
+    <button class="source {{ 'on' if on else 'off' }}" hx-post="/sources/{{ key }}/toggle" hx-target="#status-bar" hx-select="unset" hx-swap="innerHTML"
+            title="{{ name }} - {{ purpose }}. {{ 'Online. Click to simulate an outage.' if on else 'Offline (simulated, ' ~ s.offline_for(key) ~ ' s left). Click to reconnect.' }}">
+      <span class="dot"></span><span class="source-name">{{ name }}</span>
+      {% if not on %}<span class="source-off">offline · {{ s.offline_for(key) }}s</span>{% endif %}
+    </button>
+  {% endfor %}
+</div>

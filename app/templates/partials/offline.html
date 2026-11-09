@@ -1,0 +1,9 @@
+<div class="offline-card" hx-get="/reconciliation/run" hx-trigger="sources-changed from:body" hx-target="this" hx-swap="outerHTML">
+  <div class="offline-icon"><i data-lucide="unplug"></i></div>
+  <h3>{{ err.name }} is not responding</h3>
+  <p class="muted">This is the simulated outage you switched on. In real life this is the moment you'd check the VPN or call IT.
+    Ledgerly keeps everything you've done so far and simply waits.</p>
+  <button class="btn primary" hx-post="/sources/{{ err.source }}/toggle" hx-target="#status-bar" hx-select="unset" hx-swap="innerHTML">
+    <i data-lucide="plug"></i> Reconnect now
+  </button>
+</div>

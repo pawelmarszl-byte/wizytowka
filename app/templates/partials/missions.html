@@ -1,0 +1,18 @@
+{% set ms = s.missions() %}
+{% set done = ms | selectattr("done") | list | length %}
+<details class="missions-card" {% if done < ms|length %}data-autoopen{% endif %}>
+  <summary>
+    <span class="missions-ring" style="--p: {{ (done / ms|length * 100) | round }}"><span>{{ done }}/{{ ms|length }}</span></span>
+    <span class="missions-title">Things to try</span>
+    <i data-lucide="chevron-up" class="chev"></i>
+  </summary>
+  <ol>
+    {% for mi in ms %}
+      <li class="{{ 'done' if mi.done }}">
+        <i data-lucide="{{ 'circle-check' if mi.done else 'circle' }}"></i>
+        <div><strong>{{ mi.title }}</strong><small>{{ mi.hint }}</small></div>
+      </li>
+    {% endfor %}
+  </ol>
+  {% if done == ms|length %}<p class="missions-done"><i data-lucide="party-popper"></i> You've seen everything. Thanks for clicking around!</p>{% endif %}
+</details>

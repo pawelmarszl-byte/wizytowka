@@ -1,0 +1,99 @@
+{% set icons = {"duplicate": "copy", "amount": "hash", "timing": "calendar-clock", "ledger_only": "ghost", "unposted": "inbox"} %}
+<div class="recon-result">
+  <section class="tiles tiles-3">
+    <div class="tile static">
+      <span class="tile-label"><i data-lucide="link"></i> Matched</span>
+      <span class="tile-value">{{ rec.matched }}</span>
+      <span class="tile-sub">transactions agree perfectly</span>
+    </div>
+    <a class="tile {{ 'alert' if rec.problems }}" href="#issues">
+      <span class="tile-label"><i data-lucide="triangle-alert"></i> Bookkeeping mistakes</span>
+      <span class="tile-value {{ 'bad' if rec.problems else 'good' }}">{{ rec.problems | length }}</span>
+      <span class="tile-sub">{% if rec.problems %}{{ rec.problem_total | money }} booked wrongly{% else %}none - nicely done{% endif %}</span>
+    </a>
+    <a class="tile" href="/statements">
+      <span class="tile-label"><i data-lucide="inbox"></i> Not posted yet</span>
+      <span class="tile-value">{{ rec.unposted | length }}</span>
+      <span class="tile-sub">{% if rec.unposted %}bank lines waiting in Statements{% else %}everything is booked{% endif %}</span>
+    </a>
+  </section>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><i data-lucide="chart-line"></i> Bank balance vs. ledger balance, day by day</h2>
+      <div class="legend">
+        <span><i class="key key-bank"></i> Bank</span>
+        <span><i class="key key-ledger"></i> Ledger</span>
+      </div>
+    </div>
+    <p class="muted small chart-note">
+      {% if rec.closing_difference == 0 and not rec.problems %}
+        The two lines sit on top of each other - the books match the bank on every day.
+      {% else %}
+        When the books are right, the two lines overlap. Bars below show by how much they disagree on each day. Hover for details.
+      {% endif %}
+    </p>
+    <div class="chart-wrap">
+      {{ chart | safe }}
+      <div class="chart-tip" data-tip hidden></div>
+    </div>
+    <details class="table-view">
+      <summary>Show as a table</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Day</th><th class="num">Bank</th><th class="num">Ledger</th><th class="num">Difference</th></tr></thead>
+          <tbody>
+            {% for d in rec.days %}
+              <tr><td>{{ d.day.strftime("%a %d %b") }}</td><td class="num">{{ d.bank | money }}</td><td class="num">{{ d.ledger | money }}</td>
+                <td class="num {{ 'out' if d.difference }}">{{ d.difference | money(true) if d.difference else "-" }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="card" id="issues">
+    <div class="card-head">
+      <h2><i data-lucide="list-checks"></i> What's different and why</h2>
+      <button class="btn small ghost" hx-get="/reconciliation/run" hx-target="#recon" hx-select="unset" hx-swap="innerHTML">
+        <i data-lucide="refresh-cw"></i> Re-run
+      </button>
+    </div>
+
+    {% if not rec.problems %}
+      <div class="all-good">
+        <i data-lucide="party-popper"></i>
+        <div><strong>No bookkeeping mistakes left.</strong>
+          <p class="muted">{% if s.fixed %}You fixed {{ s.fixed | length }} mistake{{ 's' if s.fixed|length != 1 }} by posting correcting entries - the original entries stay in place, as auditors expect.{% else %}The ledger matches the bank.{% endif %}</p></div>
+      </div>
+    {% endif %}
+
+    <ul class="issues">
+      {% for i in rec.problems %}
+        <li class="issue">
+          <span class="issue-icon"><i data-lucide="{{ icons[i.kind] }}"></i></span>
+          <div class="issue-body">
+            <div class="issue-top">
+              <strong>{{ i.title }}</strong>
+              <span class="issue-diff">{% if i.kind == "timing" %}{{ ((i.ledger_day - i.bank_day).days) }} day{{ "s" if (i.ledger_day - i.bank_day).days != 1 }} late{% else %}{{ i.difference | money(true) }}{% endif %}</span>
+            </div>
+            <p>{{ i.explanation }}</p>
+            <small class="muted">{{ i.description }} · {{ i.ref }} · {{ (i.bank_day or i.ledger_day).strftime("%d %b") }}</small>
+          </div>
+          <button class="btn small primary" hx-post="/reconciliation/fix/{{ i.ref }}" hx-target="#recon" hx-select="unset" hx-swap="innerHTML"
+                  hx-disabled-elt="this">
+            <i data-lucide="wrench"></i> {{ i.fix_label }}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+
+    {% if rec.unposted %}
+      <div class="unposted">
+        <p><i data-lucide="inbox"></i> <strong>{{ rec.unposted | length }} bank transaction{{ 's' if rec.unposted|length != 1 }} not posted yet.</strong>
+          These aren't mistakes - the statements simply haven't been booked. Post them in <a href="/statements">Bank statements</a> and the gap closes.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>

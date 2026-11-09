@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}How it works{% endblock %}
+{% block main %}
+<div class="page-head">
+  <div>
+    <h1>How it works</h1>
+    <p class="muted">A portfolio project. Here's the story behind it and what's under the hood.</p>
+  </div>
+</div>
+
+<section class="grid-2">
+  <div class="card prose">
+    <h2><i data-lucide="lightbulb"></i> The problem</h2>
+    <p>In a finance team, someone has to check every day that the company's books match its bank account. Done by hand
+      it means downloading PDFs, retyping lines into the accounting system and hunting for differences in spreadsheets.
+      It's slow, and mistakes such as a payment booked twice or two swapped digits slip through.</p>
+    <p>I built an internal tool that automates this for my own work. <strong>Ledgerly is a public rewrite of that idea</strong>,
+      made from scratch with invented data so anyone can try it. <a href="/" hx-boost="false">More about me →</a></p>
+
+    <h2><i data-lucide="sparkles"></i> What to look for</h2>
+    <ul>
+      <li><strong>Real PDF reading.</strong> Statements are generated as genuine PDFs and parsed back from text. The
+        "doesn't add up" check is computed, not scripted.</li>
+      <li><strong>Safety checks before automation.</strong> A statement that doesn't balance can't be posted.</li>
+      <li><strong>Explainable results.</strong> Each difference is classified (duplicate, typo, timing, phantom entry)
+        and described in plain language.</li>
+      <li><strong>Audit-friendly fixes.</strong> Corrections are new entries; nothing is silently deleted.</li>
+      <li><strong>Failure handling.</strong> Click a dot in the status bar to cut a connection and see how the app behaves.</li>
+    </ul>
+  </div>
+
+  <div class="card prose">
+    <h2><i data-lucide="layers"></i> Under the hood</h2>
+    <ul class="stack">
+      <li><b>Backend</b> Python 3.12 · FastAPI · Jinja2</li>
+      <li><b>Frontend</b> HTMX - server-rendered HTML fragments, no JS framework, no build step</li>
+      <li><b>Charts</b> SVG drawn on the server</li>
+      <li><b>PDF</b> fpdf2 to generate, pypdf to read</li>
+      <li><b>Data</b> deterministic generator (seed 42), isolated in-memory session per visitor</li>
+      <li><b>Quality</b> unit + HTTP tests, GitHub Actions CI, a test that blocks real company names from the repo</li>
+      <li><b>Hosting</b> Render free tier (the first visit after a quiet spell takes ~30 s to wake up)</li>
+    </ul>
+    <h2><i data-lucide="shield-check"></i> About the data</h2>
+    <p>Harbor Bank, Ledgerly Demo Ltd. and every customer, supplier and amount are fictional. Your session is private
+      to your browser and disappears after a few hours or when you press <em>Reset demo</em>.</p>
+  </div>
+</section>
+{% endblock %}

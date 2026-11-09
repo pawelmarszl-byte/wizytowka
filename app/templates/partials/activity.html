@@ -1,0 +1,9 @@
+<ul class="activity">
+  {% for e in s.events %}
+    <li class="tone-{{ e.tone }}">
+      <i data-lucide="{{ e.icon }}"></i>
+      <span>{{ e.text }}</span>
+      <time data-ago="{{ e.at | int }}"></time>
+    </li>
+  {% endfor %}
+</ul>
