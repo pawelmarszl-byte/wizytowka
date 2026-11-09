@@ -33,6 +33,7 @@ idea**, built from scratch on invented data so anyone can try it.
 | **Approve bookings** | Each line gets a suggested account from simple rules. Lines no rule recognises wait for you, with a hint. |
 | **Repair a broken statement** | One PDF prints a line in an old format. The balance check (opening + lines ≠ closing) catches it and blocks posting until you fix it. |
 | **Reconcile** | Bank vs. ledger, line by line. Four planted mistakes are found, explained in plain English and fixed with correcting entries. |
+| **Close the accruals** | Settle last month's estimates against real invoices (exact, within tolerance, over tolerance with a reason, never invoiced), book this month's accruals from contracts and invoice history, then tie the accrued-expenses account and sign off. |
 | **Break things** | Click a dot in the status bar to simulate an outage (bank, data warehouse, ERP) and see how the app behaves. |
 
 A *Things to try* checklist in the sidebar guides first-time visitors.
@@ -69,6 +70,10 @@ The site root (`/`) is a personal page about the author, with Ledgerly as the fe
 * **Reconciliation by shape.** For each transaction reference the bank's `{date: amount}` map is compared with the
   ledger's. The *shape* of the difference identifies the mistake (same total on another day = timing; N× the amount =
   duplicate, …). Fixes are new correcting entries, so the audit trail stays intact.
+* **Accruals as a three-step process.** Last month's accruals are reversed on day 1 and settled against the real
+  invoices; differences above a 5 % tolerance need a reason. This month's proposals show their basis (contract,
+  3-month average, annual fee / 12, carried forward). A proposal for a cost that is already invoiced blocks booking,
+  and the 2400 roll-forward must tie to the ledger before sign-off locks the period.
 * **Charts drawn on the server** as SVG (no chart library). The colour pair was checked for colour-blind separation
   in light and dark mode.
 * **Isolated sessions.** Each visitor gets an in-memory copy of the month (cookie-keyed, expires after 3 h), so many
@@ -85,6 +90,7 @@ app/
     statement_pdf.py render a statement PDF and parse it back
     posting.py       rule-based account suggestions
     reconciliation.py bank vs. ledger comparison and correcting entries
+    accruals.py      month-end accruals: settle, propose, book, roll-forward, sign-off
   state.py           per-visitor session: arrivals, outages, postings, missions
   main.py            FastAPI routes: personal page at /, the demo at /demo (+ HTMX fragments)
   web/chart.py       server-side SVG chart
@@ -121,6 +127,6 @@ Python 3.12 · FastAPI · Jinja2 · HTMX · fpdf2 · pypdf · SVG · GitHub Acti
 
 ---
 
-**Author:** Paweł Marszałek · [LinkedIn](https://www.linkedin.com/in/pawel-marszalek-02928b98)
+**Author:** Paweł Marszałek · [LinkedIn](https://www.linkedin.com/in/pawe%C5%82-marsza%C5%82ek-02928b98/)
 
 <sub>All names, accounts and amounts are randomly generated. Harbor Bank and Ledgerly Demo Ltd. are fictional.</sub>

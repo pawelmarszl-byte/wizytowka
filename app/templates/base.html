@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Ledgerly{% endblock %} · Ledgerly demo</title>
-  <meta name="description" content="Ledgerly - a portfolio demo of a finance back-office tool: reads bank statement PDFs, posts them to the ledger and reconciles the books. All data is fictional.">
+  <meta name="description" content="Ledgerly - a portfolio demo of a finance back-office tool: reads bank statement PDFs, posts them to the ledger, reconciles the books and runs month-end accruals. All data is fictional.">
   <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +29,7 @@
           ("dashboard", "/demo", "layout-dashboard", "Overview"),
           ("statements", "/statements", "file-text", "Bank statements"),
           ("reconciliation", "/reconciliation", "scale", "Reconciliation"),
+          ("accruals", "/accruals", "hourglass", "Accruals"),
           ("about", "/about", "info", "How it works"),
         ] %}
         {% for key, href, icon, label in nav %}
@@ -93,6 +94,7 @@
         <li><i data-lucide="file-down"></i><div><strong>Bank statements arrive as PDFs.</strong> Ledgerly reads them and suggests how to book every line.</div></li>
         <li><i data-lucide="check-check"></i><div><strong>You approve the bookings</strong> - one click sends them to the ledger.</div></li>
         <li><i data-lucide="scale"></i><div><strong>Reconciliation compares bank vs. books</strong> and explains every difference in plain English.</div></li>
+        <li><i data-lucide="hourglass"></i><div><strong>Accruals close the month</strong> - costs not yet invoiced are estimated, booked and settled later.</div></li>
       </ol>
       <p class="muted small">The bank, the company and every number are made up. Nothing you do here is saved - feel free to break things.</p>
       <p class="muted small welcome-by">Built by Paweł Marszałek · <a href="/" hx-boost="false">about the author</a></p>

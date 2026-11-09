@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Accruals{% endblock %}
+{% block main %}
+<div class="page-head">
+  <div>
+    <h1>Accruals</h1>
+    <p class="muted">Costs of <strong>{{ m.label }}</strong> that haven't been invoiced yet still belong in this month's P&amp;L.
+      Settle last month's estimates, book this month's, and prove the accruals account adds up.</p>
+  </div>
+</div>
+
+<div id="accruals">
+  {% include "partials/accruals_body.html" %}
+</div>
+{% endblock %}

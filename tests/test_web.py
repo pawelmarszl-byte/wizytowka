@@ -23,7 +23,7 @@ class WebFlowTest(unittest.TestCase):
         home = self.c.get("/")
         self.assertIn("Paweł Marszałek", home.text)
         self.assertIn('href="/demo"', home.text)
-        for url in ("/demo", "/statements", "/reconciliation", "/about"):
+        for url in ("/demo", "/statements", "/reconciliation", "/accruals", "/about"):
             r = self.c.get(url)
             self.assertEqual(r.status_code, 200, url)
             self.assertIn("Ledgerly", r.text)

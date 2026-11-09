@@ -14,6 +14,7 @@ from decimal import Decimal
 from functools import lru_cache
 from typing import Callable
 
+from .domain.accruals import AccrualBook
 from .domain.generator import generate_month
 from .domain.models import LedgerEntry, MonthData, Statement, Transaction
 from .domain.posting import Suggestion, customer_hint, suggest_account
@@ -39,6 +40,7 @@ MISSIONS = (
     ("post", "Post a statement to the ledger", "Statement 013 has a payment no rule recognises - choose an account, then post it."),
     ("repair", "Repair a statement that doesn't add up", "Statement 014 has a line the reader couldn't understand - enter it by hand."),
     ("reconcile", "Find and fix all 4 bookkeeping mistakes", "Reconciliation → run it → use the “Fix” buttons."),
+    ("accruals", "Close the month's accruals", "Accruals → settle September, book October, then sign off the 2400 roll-forward."),
     ("outage", "Survive a connection outage", "Click a dot in the status bar at the bottom and simulate an outage."),
 )
 
@@ -110,6 +112,7 @@ class DemoSession:
     fixed: dict[str, str] = field(default_factory=dict)  # ref -> issue kind that was fixed
     unseen_arrivals: list[int] = field(default_factory=list)
     flags: set[str] = field(default_factory=set)  # mission progress, see MISSIONS
+    accruals: AccrualBook | None = None
 
     def __post_init__(self):
         now = self.clock()
@@ -119,10 +122,12 @@ class DemoSession:
         self.next_arrival = now + ARRIVAL_INTERVAL_S
         self.posted = set(range(1, m.initially_posted + 1))
         self.ledger = list(m.ledger_seed)
+        self.accruals = AccrualBook.new(m.year, m.month)
         # A bit of history so the activity feed isn't empty on arrival.
         history = [
             (5400, "upload", "ERP import: statements 001-012 booked by the accounting team"),
             (3000, "pencil", "Manual entry MAN-0007 (cash deposit) added by a team member"),
+            (4200, "repeat", f"Accruals of {self.accruals.previous_end:%B} reversed automatically on {self.accruals.first_day:%d %b}"),
             (900, "file-down", f"Statements {m.statement(13).code} - {m.statement(m.initially_received).code} received, waiting to be posted"),
         ]
         for ago, icon, text in history:
@@ -311,6 +316,53 @@ class DemoSession:
             self.flags.add("reconcile")
         self.log("wrench", f"Fixed: {issue.title.lower()} ({ref})", "success")
         return issue
+
+    # ------------------------------------------------------------------ accruals
+
+    def settle_accrual(self, accrual_id: str, reason: str | None = None):
+        self.require("erp")
+        s = self.accruals.settle(accrual_id, reason)
+        a = self.accruals.accrual(accrual_id)
+        tone = "warning" if s.reason else "success"
+        self.log("file-check", f"Accrual {a.id} ({a.supplier}) settled with invoice {s.invoice}, difference {s.variance:+,.2f}", tone)
+        return s
+
+    def carry_accrual(self, accrual_id: str):
+        a = self.accruals.accrual(accrual_id)
+        s = self.accruals.carry(accrual_id)
+        self.log("calendar-plus", f"Accrual {a.id} ({a.supplier}) carried forward - still waiting for the invoice")
+        return s
+
+    def release_accrual(self, accrual_id: str):
+        self.require("erp")
+        a = self.accruals.accrual(accrual_id)
+        s = self.accruals.release(accrual_id)
+        self.log("undo-2", f"Accrual {a.id} ({a.supplier}) released - {a.amount:,.2f} back to the P&L", "warning")
+        return s
+
+    def book_accruals(self):
+        self.require("erp")
+        lines = self.accruals.book()
+        b = self.accruals
+        self.log("book-open-check", f"{len(b.booked)} accruals for {b.period_end:%B} booked ({b.booked_total():,.2f}), "
+                                   f"auto-reversal on {b.reversal_day:%d %b}", "success")
+        return lines
+
+    def unbook_accruals(self):
+        self.require("erp")
+        self.accruals.unbook()
+        self.log("undo-2", "Booking of this month's accruals reversed", "warning")
+
+    def reclassify_stray(self):
+        self.require("erp")
+        e = self.accruals.reclassify_stray()
+        self.log("arrow-right-left", f"{e.ref} moved from 2400 to {e.correct_account} ({-e.amount:,.2f})", "success")
+        return e
+
+    def sign_off_accruals(self):
+        self.accruals.sign_off()
+        self.flags.add("accruals")
+        self.log("stamp", f"Accrued expenses (2400) signed off for {self.accruals.period_end:%B}", "success")
 
 
 class SessionStore:

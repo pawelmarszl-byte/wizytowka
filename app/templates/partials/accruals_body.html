@@ -1,0 +1,312 @@
+{% set rf = b.roll_forward() %}
+{% set prev = b.previous_end.strftime("%B") %}
+{% set cur = b.period_end.strftime("%B") %}
+{% set locked = b.is_booked %}
+{% set hx = 'hx-target="#accruals" hx-select="unset" hx-swap="innerHTML"' %}
+
+{# ---------- Stepper ---------- #}
+<ol class="stepper" aria-label="Accrual process">
+  {% for n, label, sub in [(1, "Settle " ~ prev, "match invoices to last month's estimates"),
+                           (2, "Book " ~ cur, "review proposals, post the journal"),
+                           (3, "Roll-forward", "tie account 2400 and sign off")] %}
+    <li class="{{ 'done' if b.step > n else ('on' if b.step == n) }}">
+      <a href="#step-{{ n }}">
+        <span class="step-dot">{% if b.step > n %}<i data-lucide="check"></i>{% else %}{{ n }}{% endif %}</span>
+        <span><strong>{{ label }}</strong><small>{{ sub }}</small></span>
+      </a>
+    </li>
+  {% endfor %}
+</ol>
+
+{# ---------- Summary tiles ---------- #}
+<section class="tiles tiles-3">
+  <div class="tile static">
+    <span class="tile-label"><i data-lucide="file-check"></i> {{ prev }} accruals settled</span>
+    <span class="tile-value {{ 'good' if not b.unresolved }}">{{ b.opening|length - b.unresolved|length }}/{{ b.opening|length }}</span>
+    <span class="tile-sub">{% if b.settlement_variance() %}invoices {{ b.settlement_variance() | money(true) }} vs. estimates{% else %}estimates vs. real invoices{% endif %}</span>
+  </div>
+  <div class="tile static">
+    <span class="tile-label"><i data-lucide="hourglass"></i> {{ cur }} accruals</span>
+    <span class="tile-value">{{ (b.booked_total() if locked else b.planned_total()) | money }}</span>
+    <span class="tile-sub">{% if locked %}booked · reverses on {{ b.reversal_day.strftime("%d %b") }}{% else %}{{ b.selected()|length }} selected, not booked yet{% endif %}</span>
+  </div>
+  <div class="tile static {{ 'alert' if locked and not rf.ties }}">
+    <span class="tile-label"><i data-lucide="scale"></i> Account 2400 vs. list</span>
+    {% if b.signed_off %}
+      <span class="tile-value good">Signed off</span>
+      <span class="tile-sub">period locked</span>
+    {% elif not locked %}
+      <span class="tile-value muted">-</span>
+      <span class="tile-sub">checked after booking</span>
+    {% elif rf.ties %}
+      <span class="tile-value good">Agrees</span>
+      <span class="tile-sub">ready to sign off</span>
+    {% else %}
+      <span class="tile-value bad">{{ rf.difference | money(true) }}</span>
+      <span class="tile-sub">ledger and list disagree</span>
+    {% endif %}
+  </div>
+</section>
+
+{# ================================================================== STEP 1 #}
+<div class="card" id="step-1">
+  <div class="card-head">
+    <h2><i data-lucide="file-check"></i> 1 · Settle {{ prev }}'s accruals</h2>
+    <span class="muted small">Reversed automatically on {{ b.first_day.strftime("%d %b") }} · tolerance 5% (min. €25)</span>
+  </div>
+  <p class="muted small step-intro">On {{ b.previous_end.strftime("%d %b") }} these costs were estimated and booked to 2400. Now the real invoices are in -
+    compare each one with its estimate. The difference lands in {{ cur }}'s P&amp;L.</p>
+
+  <ul class="acr-list">
+    {% for a in b.opening %}
+      {% set st = b.match_status(a.id) %}
+      {% set inv = b.invoice_for(a.id) %}
+      {% set done = b.settlements.get(a.id) %}
+      {% set v = b.variance(a.id) %}
+      <li class="acr {{ 'resolved' if done }} {{ 'flash' if flash == a.id }}" id="acr-{{ a.id }}">
+        <div class="acr-main">
+          <div class="acr-who">
+            <strong>{{ a.supplier }}</strong>
+            <small class="muted">{{ a.description }} · {{ a.account }} {{ ACCOUNTS[a.account] }} · {{ a.id }}</small>
+          </div>
+          <div class="acr-compare">
+            <div><small>Estimate</small><b>{{ a.amount | money }}</b></div>
+            <i data-lucide="arrow-right" class="muted"></i>
+            <div><small>Invoice</small><b>{% if inv %}{{ inv.amount | money }}{% else %}<span class="muted">none yet</span>{% endif %}</b>
+              {% if inv %}<small class="muted">{{ inv.number }} · {{ inv.received.strftime("%d %b") }}</small>{% endif %}</div>
+            <div class="acr-var">
+              {% if st == "exact" %}<span class="badge status-posted"><i data-lucide="check"></i> Exact match</span>
+              {% elif st == "within" %}<span class="badge status-ready"><i data-lucide="circle-dot"></i> {{ v | money(true) }} · within tolerance</span>
+              {% elif st == "over" %}<span class="badge status-review"><i data-lucide="triangle-alert"></i> {{ v | money(true) }} · {{ (v / a.amount * 100) | round(1) }}% over</span>
+              {% else %}<span class="badge status-blocked"><i data-lucide="circle-help"></i> No invoice</span>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if done %}
+          <div class="acr-outcome">
+            {% if done.outcome == "settled" %}
+              <span><i data-lucide="circle-check"></i> Settled with {{ done.invoice }}{% if done.variance %} - {{ done.variance | money(true) }} to {{ a.account }} in {{ cur }}{% endif %}{% if done.reason %} · <em>{{ done.reason }}</em>{% endif %}</span>
+            {% elif done.outcome == "carried" %}
+              <span><i data-lucide="calendar-plus"></i> Carried forward - re-accrued in step 2</span>
+            {% else %}
+              <span><i data-lucide="undo-2"></i> Released - {{ (-done.variance) | money }} credit to {{ a.account }} in {{ cur }}</span>
+            {% endif %}
+            {% if not locked %}<button class="btn small ghost" hx-post="/accruals/undo/{{ a.id }}" {{ hx|safe }}><i data-lucide="rotate-ccw"></i> Undo</button>{% endif %}
+          </div>
+        {% elif st in ("exact", "within") %}
+          <div class="acr-actions">
+            <span class="muted small">{% if st == "exact" %}The invoice matches the estimate to the cent.{% else %}Small difference - accepted without comment.{% endif %}</span>
+            <button class="btn small primary" hx-post="/accruals/settle/{{ a.id }}" {{ hx|safe }} hx-disabled-elt="this"><i data-lucide="check-check"></i> Settle</button>
+          </div>
+        {% elif st == "over" %}
+          <form class="acr-actions" hx-post="/accruals/settle/{{ a.id }}" {{ hx|safe }}>
+            {% if a.hint %}<span class="why tip"><i data-lucide="lightbulb"></i> {{ a.hint }}</span>{% endif %}
+            <div class="acr-reason">
+              <label class="small">Why is the invoice higher?
+                <select name="reason" required>
+                  <option value="">Choose a reason…</option>
+                  {% for r in VARIANCE_REASONS %}<option>{{ r }}</option>{% endfor %}
+                </select>
+              </label>
+              <button class="btn small primary" hx-disabled-elt="this"><i data-lucide="check-check"></i> Settle with comment</button>
+            </div>
+          </form>
+        {% else %}
+          <div class="acr-actions">
+            {% if a.hint %}<span class="why tip"><i data-lucide="lightbulb"></i> {{ a.hint }}</span>{% endif %}
+            <div class="acr-buttons">
+              <button class="btn small" hx-post="/accruals/carry/{{ a.id }}" {{ hx|safe }}><i data-lucide="calendar-plus"></i> Still expected - carry forward</button>
+              <button class="btn small" hx-post="/accruals/release/{{ a.id }}" {{ hx|safe }}><i data-lucide="undo-2"></i> Won't come - release</button>
+            </div>
+          </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+{# ================================================================== STEP 2 #}
+<div class="card" id="step-2">
+  <div class="card-head">
+    <h2><i data-lucide="hourglass"></i> 2 · Book {{ cur }}'s accruals</h2>
+    <span class="muted small">Dated {{ b.period_end.strftime("%d %b") }} · reverses {{ b.reversal_day.strftime("%d %b") }}</span>
+  </div>
+  <p class="muted small step-intro">Ledgerly proposes an amount for every service used in {{ cur }} without an invoice, and shows where the number comes from.
+    Adjust what you disagree with, untick what doesn't apply, add anything it missed.</p>
+
+  <div class="table-wrap">
+    <table class="acr-table">
+      <thead><tr><th class="chk"></th><th>Supplier &amp; basis</th><th>Account</th><th class="num">Amount</th></tr></thead>
+      <tbody>
+      {% for c in b.proposals() %}
+        {% set on = b.is_included(c) %}
+        <tr class="{{ 'off' if not on }} {{ 'conflict' if c.invoiced_by and on }}">
+          <td class="chk">
+            <input type="checkbox" {{ 'checked' if on }} {{ 'disabled' if locked }} aria-label="Include {{ c.supplier }}"
+                   hx-post="/accruals/toggle/{{ c.id }}" hx-trigger="change" {{ hx|safe }}>
+          </td>
+          <td>
+            <span class="desc"><strong>{{ c.supplier }}</strong> · {{ c.description }}</span>
+            <small class="why">
+              <i data-lucide="{{ {'contract': 'file-signature', 'average': 'calculator', 'annual': 'calendar-range', 'carried': 'calendar-plus', 'manual': 'pen-line'}[c.basis] }}"></i>
+              {{ c.basis_text }}{% if c.age_days %} · open {{ c.age_days }} days{% endif %}
+            </small>
+            {% if c.history %}
+              <span class="hist">{% for label, val in c.history %}<span>{{ label }} <b>{{ val | money }}</b></span>{% endfor %}</span>
+            {% endif %}
+            {% if c.invoiced_by %}
+              <small class="why {{ 'warn' if on else 'ok' }}"><i data-lucide="{{ 'triangle-alert' if on else 'circle-check' }}"></i>
+                Invoice {{ c.invoiced_by }} for this cost already arrived on {{ b.invoice(c.invoiced_by).received.strftime("%d %b") }}
+                - {% if on %}accruing it too would book the cost twice.{% else %}correctly left out.{% endif %}</small>
+            {% endif %}
+          </td>
+          <td><span class="acct">{{ c.account }} · {{ ACCOUNTS[c.account] }}</span></td>
+          <td class="num">
+            {% if locked or not on %}
+              <b>{{ b.amount_of(c) | money }}</b>
+            {% else %}
+              <form class="amt" hx-post="/accruals/amount/{{ c.id }}" hx-trigger="change from:find input, submit" {{ hx|safe }}>
+                <span>€</span><input name="amount" value="{{ '%.2f' | format(b.amount_of(c)) }}" inputmode="decimal" aria-label="Amount for {{ c.supplier }}" autocomplete="off">
+              </form>
+              {% if b.amount_of(c) != c.amount %}<small class="muted">proposed {{ c.amount | money }}</small>{% endif %}
+            {% endif %}
+            {% if c.basis == "manual" and not locked %}
+              <button class="link-btn" hx-post="/accruals/manual/{{ c.id }}/remove" {{ hx|safe }}><i data-lucide="trash-2"></i> remove</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      <tfoot><tr><td></td><td colspan="2"><strong>Total to accrue</strong></td><td class="num"><strong>{{ (b.booked_total() if locked else b.planned_total()) | money }}</strong></td></tr></tfoot>
+    </table>
+  </div>
+
+  {% if not locked %}
+    <details class="acr-add">
+      <summary><i data-lucide="circle-plus"></i> Add an accrual Ledgerly didn't propose</summary>
+      <form hx-post="/accruals/manual" {{ hx|safe }} class="acr-add-form">
+        <label>Supplier<input name="supplier" required maxlength="60" placeholder="e.g. Papyrus Office Supply" autocomplete="off"></label>
+        <label>What for<input name="description" required maxlength="90" placeholder="e.g. Printer toner delivered 28 Oct" autocomplete="off"></label>
+        <label>Account
+          <select name="account">{% for code in EXPENSE_ACCOUNTS %}<option value="{{ code }}">{{ code }} · {{ ACCOUNTS[code] }}</option>{% endfor %}</select>
+        </label>
+        <label>Amount (€)<input name="amount" required inputmode="decimal" placeholder="e.g. 320.00" autocomplete="off"></label>
+        <button class="btn primary small"><i data-lucide="plus"></i> Add</button>
+      </form>
+    </details>
+  {% endif %}
+
+  {# ---------- Journal preview + book ---------- #}
+  {% set journal = b.journal(b.booked if locked else none) %}
+  <div class="journal">
+    <div class="journal-head"><strong><i data-lucide="book-open"></i> {{ 'Posted journal' if locked else 'Journal preview' }}</strong>
+      <small class="muted">{{ b.period_end.strftime("%d %b %Y") }} · auto-reversal {{ b.reversal_day.strftime("%d %b %Y") }}</small></div>
+    <div class="table-wrap">
+      <table class="journal-table">
+        <thead><tr><th>Account</th><th>Text</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+        <tbody>
+          {% for j in journal %}
+            <tr><td>{{ j.account }} <small class="muted">{{ ACCOUNTS[j.account] }}</small></td><td class="small">{{ j.text }}</td>
+              <td class="num">{{ j.debit | money if j.debit else "" }}</td><td class="num">{{ j.credit | money if j.credit else "" }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="detail-foot">
+    {% if locked %}
+      <p class="posted-msg"><i data-lucide="circle-check"></i> Booked. On {{ b.reversal_day.strftime("%d %b") }} the entry reverses itself, ready for the real invoices.</p>
+      {% if not b.signed_off %}
+        <button class="btn ghost" hx-post="/accruals/unbook" {{ hx|safe }}><i data-lucide="undo-2"></i> Undo booking</button>
+      {% endif %}
+    {% else %}
+      {% set blockers = b.blockers() %}
+      {% if blockers %}
+        <ul class="blockers">{% for x in blockers %}<li><i data-lucide="lock"></i> {{ x }}</li>{% endfor %}</ul>
+        <button class="btn primary" disabled><i data-lucide="lock"></i> Book accruals</button>
+      {% else %}
+        <p class="muted">Posts {{ journal|length }} journal lines: debit the expense accounts, credit 2400 Accrued expenses.</p>
+        <button class="btn primary big" hx-post="/accruals/book" {{ hx|safe }} hx-disabled-elt="this" hx-indicator="this">
+          <i data-lucide="send" class="hide-on-request"></i><i data-lucide="loader-circle" class="show-on-request spin"></i>
+          <span class="hide-on-request">Book accruals</span><span class="show-on-request">Sending to ERP…</span>
+        </button>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+{# ================================================================== STEP 3 #}
+<div class="grid-2 acr-grid" id="step-3">
+  <div class="card">
+    <div class="card-head">
+      <h2><i data-lucide="scale"></i> 3 · Roll-forward of 2400</h2>
+      {% if b.signed_off %}<span class="badge status-posted"><i data-lucide="stamp"></i> Signed off</span>{% endif %}
+    </div>
+    <table class="rf">
+      <tbody>
+        <tr><td>Opening balance {{ b.previous_end.strftime("%d %b") }}</td><td class="num">{{ rf.opening | money }}</td></tr>
+        <tr><td>− Reversed on day 1</td><td class="num">{{ (-rf.reversed) | money }}</td></tr>
+        <tr><td>+ Accrued for {{ cur }}</td><td class="num">{{ rf.booked | money if locked else "not booked" }}</td></tr>
+        <tr class="sum"><td>Closing balance per accrual list</td><td class="num">{{ rf.closing | money }}</td></tr>
+        <tr><td>Balance of 2400 in the ledger</td><td class="num">{{ rf.gl_balance | money }}</td></tr>
+        <tr class="sum {{ 'ok' if rf.ties else 'bad' }}"><td>Difference</td><td class="num">{{ rf.difference | money(true) if rf.difference else "€0.00 ✓" }}</td></tr>
+      </tbody>
+    </table>
+
+    {% if b.stray and not b.stray_fixed %}
+      <div class="stray">
+        <p><i data-lucide="search"></i> <strong>Something else is sitting on 2400.</strong> {{ b.stray.ref }} · {{ b.stray.day.strftime("%d %b") }} ·
+          {{ b.stray.text }} · {{ b.stray.amount | money(true) }}</p>
+        <p class="muted small">{{ b.stray.why }}</p>
+        <button class="btn small" hx-post="/accruals/reclassify" {{ hx|safe }}><i data-lucide="arrow-right-left"></i> Reclassify to {{ b.stray.correct_account }}</button>
+      </div>
+    {% endif %}
+
+    <details class="table-view">
+      <summary>Show the 2400 ledger entries</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Day</th><th>Ref</th><th>Text</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            {% for day, ref, text, amount in b.gl_entries() %}
+              <tr><td>{{ day.strftime("%d %b") }}</td><td class="small">{{ ref }}</td><td class="small">{{ text }}</td><td class="num">{{ amount | money(true) }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <div class="detail-foot">
+      {% if b.signed_off %}
+        <p class="posted-msg"><i data-lucide="lock"></i> Signed off. The accruals for {{ cur }} are locked.</p>
+      {% elif not locked %}
+        <p class="muted">Book {{ cur }}'s accruals first, then check that the account agrees.</p>
+        <button class="btn primary" disabled><i data-lucide="lock"></i> Sign off</button>
+      {% elif not rf.ties %}
+        <p class="muted">The ledger shows {{ rf.difference | money(true) }} that isn't on the accrual list. Find it before signing off.</p>
+        <button class="btn primary" disabled><i data-lucide="lock"></i> Sign off</button>
+      {% else %}
+        <p class="muted">The ledger agrees with the accrual list to the cent.</p>
+        <button class="btn primary" hx-post="/accruals/signoff" {{ hx|safe }}><i data-lucide="stamp"></i> Sign off</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2><i data-lucide="chart-no-axes-column"></i> Effect on {{ cur }}'s P&amp;L</h2></div>
+    <table class="rf">
+      <tbody>
+        <tr><td>New accruals for {{ cur }}{% if not locked %} <small class="muted">(planned)</small>{% endif %}</td>
+          <td class="num">{{ b.new_accruals_total() | money }}</td></tr>
+        {% if b.carried_total() %}<tr><td>Carried forward <small class="muted">(reversed and re-accrued - no net effect)</small></td><td class="num">€0.00</td></tr>{% endif %}
+        <tr><td>Invoices above / below {{ prev }} estimates</td><td class="num">{{ b.settlement_variance() | money(true) if b.settlement_variance() else "€0.00" }}</td></tr>
+        <tr><td>Released accruals (cost that never came)</td><td class="num">{{ (-b.released_total()) | money(true) if b.released_total() else "€0.00" }}</td></tr>
+        <tr class="sum"><td>Net cost from accruals in {{ cur }}</td><td class="num">{{ b.pnl_effect() | money }}</td></tr>
+      </tbody>
+    </table>
+    <p class="muted small">Without accruals, each month's costs would depend on when suppliers happen to send their invoices.
+      Accruals move the cost into the month the service was actually used.</p>
+  </div>
+</div>

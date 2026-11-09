@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ściąga: moduł Accruals</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f5f6f8; --surface: #fff; --surface-2: #f8f9fb; --border: #e4e7ec;
+    --text: #121826; --text-2: #4b5565; --muted: #6b7280;
+    --brand: #3b4fd8; --brand-soft: #eef0fd;
+    --good: #12805c; --good-soft: #e7f6ef; --warn: #a35f00; --warn-soft: #fff4e0; --bad: #c2362f; --bad-soft: #fdecea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0f1117; --surface: #171a22; --surface-2: #1c2029; --border: #2a2f3a;
+      --text: #eef0f4; --text-2: #c2c7d0; --muted: #8e95a3;
+      --brand: #8392f5; --brand-soft: #1f2443;
+      --good: #3fbf8e; --good-soft: #13291f; --warn: #e3a440; --warn-soft: #2d2312; --bad: #f07a72; --bad-soft: #321a19;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 16px 80px; }
+  header.top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 18px; }
+  h1 { font-size: 28px; margin: 0; letter-spacing: -.02em; }
+  h2 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.01em; }
+  h3 { font-size: 16px; margin: 20px 0 8px; }
+  p { margin: .5em 0; }
+  .muted { color: var(--muted); }
+  .private { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 99px; background: var(--bad-soft); color: var(--bad); font-weight: 600; font-size: 13px; }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; }
+  nav.toc ol { margin: 6px 0 0; padding-left: 20px; columns: 2; column-gap: 28px; }
+  nav.toc a { color: var(--brand); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  section.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .pitch { border-left: 4px solid var(--brand); background: var(--brand-soft); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 10px 0; }
+  .pitch b.lang { display: inline-block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--brand); margin-bottom: 2px; }
+  .box { padding: 12px 16px; border-radius: 10px; margin: 12px 0; }
+  .box.warn { background: var(--warn-soft); }
+  .box.good { background: var(--good-soft); }
+  .box.bad { background: var(--bad-soft); }
+  .box strong:first-child { display: block; margin-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 14px; }
+  th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.sum td { font-weight: 700; border-top: 2px solid var(--border); }
+  .table-wrap { overflow-x: auto; }
+  dl.gloss { display: grid; grid-template-columns: 220px 1fr; gap: 0; margin: 0; }
+  dl.gloss dt { font-weight: 700; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--border); }
+  dl.gloss dt small { display: block; font-weight: 400; color: var(--muted); }
+  dl.gloss dd { margin: 0; padding: 10px 0; border-bottom: 1px solid var(--border); color: var(--text-2); }
+  .qa details { border: 1px solid var(--border); border-radius: 10px; margin: 8px 0; background: var(--surface-2); }
+  .qa summary { cursor: pointer; padding: 11px 14px; font-weight: 600; }
+  .qa details > div { padding: 0 14px 12px; color: var(--text-2); }
+  ol.script > li { margin-bottom: 12px; }
+  .say { display: block; margin-top: 4px; padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1px dashed var(--border); font-style: italic; color: var(--text-2); }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13px; background: var(--surface-2); border: 1px solid var(--border); padding: 1px 5px; border-radius: 5px; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 99px; margin-right: 4px; }
+  .tag.exact { background: var(--good-soft); color: var(--good); }
+  .tag.within { background: var(--brand-soft); color: var(--brand); }
+  .tag.over { background: var(--warn-soft); color: var(--warn); }
+  .tag.missing { background: var(--bad-soft); color: var(--bad); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  ul.tight li { margin-bottom: 4px; }
+  @media (max-width: 720px) {
+    nav.toc ol { columns: 1; }
+    dl.gloss { grid-template-columns: 1fr; }
+    dl.gloss dt { border-bottom: 0; padding-bottom: 0; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  @media print {
+    body { background: #fff; }
+    section.card, nav.toc { border: 0; padding: 0; break-inside: avoid-page; }
+    .qa details { break-inside: avoid; }
+    .qa details:not([open]) > div { display: block; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>Moduł Accruals: ściąga do prezentacji</h1>
+    <p class="muted">Ledgerly · notatka wewnętrzna · stan kodu z 9 listopada 2026</p>
+  </div>
+  <span class="private">● Tylko dla mnie. Nie publikować, nie wysyłać.</span>
+</header>
+
+<div class="box warn">
+  <strong>Gdzie leży ten plik</strong>
+  W folderze <code>notes/</code>, który jest w <code>.gitignore</code>: nie trafia do repozytorium ani na Render. Aplikacja serwuje
+  tylko <code>app/static</code>, więc z poziomu demo też nie da się go otworzyć. Otwierasz go lokalnie, dwuklikiem.
+</div>
+
+<nav class="toc">
+  <strong>Spis treści</strong>
+  <ol>
+    <li><a href="#pitch">Pitch: 30 sekund i 2 minuty</a></li>
+    <li><a href="#why">Po co w ogóle są accruale</a></li>
+    <li><a href="#gloss">Słowniczek: co jest czym</a></li>
+    <li><a href="#cycle">Cykl życia jednego accrualu (księgowania)</a></li>
+    <li><a href="#steps">Trzy kroki w aplikacji, z liczbami</a></li>
+    <li><a href="#demo">Scenariusz pokazu: klik po kliku</a></li>
+    <li><a href="#qa">Trudne pytania i odpowiedzi</a></li>
+    <li><a href="#simplified">Co jest uproszczone (powiedz to sam)</a></li>
+    <li><a href="#dont">Czego nie mówić</a></li>
+    <li><a href="#tech">Strona techniczna</a></li>
+    <li><a href="#numbers">Liczby w pigułce</a></li>
+  </ol>
+</nav>
+
+<!-- ================================================================ 1 -->
+<section class="card" id="pitch">
+  <h2>1. Pitch</h2>
+  <h3>Wersja 30-sekundowa</h3>
+  <div class="pitch"><b class="lang">PL</b><br>
+    „Oprócz uzgodnienia banku Ledgerly obsługuje miesięczne accruale, czyli koszty, które już ponieśliśmy, ale na które
+    nie mamy jeszcze faktury. Proces ma trzy kroki: rozliczam zeszłomiesięczne szacunki z prawdziwymi fakturami z tolerancją,
+    księguję nowe accruale z pokazaną podstawą każdej kwoty, a na koniec uzgadniam konto 2400 z listą i zatwierdzam.
+    System blokuje typowe błędy: podwójne zaksięgowanie kosztu i zatwierdzenie konta, które się nie zgadza.”</div>
+  <div class="pitch"><b class="lang">EN</b><br>
+    “Besides the bank reconciliation, Ledgerly runs the month-end accruals: costs we've incurred but haven't been invoiced for yet.
+    It's a three-step process: settle last month's estimates against the real invoices with a tolerance, book this month's
+    accruals with the basis for every number visible, then tie the accrued-expenses account to the list and sign off.
+    The tool blocks the classic mistakes: booking a cost twice, or signing off an account that doesn't agree.”</div>
+
+  <h3>Wersja 2-minutowa (gdy ktoś jest zainteresowany)</h3>
+  <ol>
+    <li><b>Problem:</b> faktury przychodzą z opóźnieniem. Prąd za wrzesień przychodzi 8 października. Bez accruali wrzesień jest
+      „za tani”, a październik „za drogi”, i wynik miesięczny zależy od tego, kiedy dostawca kliknie „wyślij”.</li>
+    <li><b>Rozwiązanie:</b> na koniec miesiąca szacujemy taki koszt i księgujemy go (Wn koszt / Ma 2400 Accrued expenses).
+      Pierwszego dnia kolejnego miesiąca zapis sam się odwraca, a kiedy przychodzi prawdziwa faktura, różnicę widać od razu.</li>
+    <li><b>Co pokazuje moduł:</b> 4 wrześniowe accruale, każdy z innym zakończeniem (idealnie / w tolerancji / ponad tolerancją,
+      z podaniem powodu / faktura nie przyszła). Do tego propozycje na październik z uzasadnieniem kwoty, jedna pułapka na
+      podwójne księgowanie i roll-forward konta 2400 z ukrytym błędem, który trzeba znaleźć przed zatwierdzeniem.</li>
+    <li><b>Dlaczego tak:</b> to jest dokładnie to, co audytor chce zobaczyć: <i>podstawa szacunku, rozliczenie z rzeczywistością,
+      wyjaśnione różnice, uzgodnione konto, podpis</i>.</li>
+  </ol>
+</section>
+
+<!-- ================================================================ 2 -->
+<section class="card" id="why">
+  <h2>2. Po co w ogóle są accruale</h2>
+  <p><b>Zasada memoriału</b> (<i>accrual basis</i>): koszt ujmujemy w okresie, w którym go ponieśliśmy, czyli w którym usługa
+    została wykonana albo towar dostarczony. Nie w okresie, w którym przyszła faktura lub wyszedł przelew.</p>
+  <p><b>Zasada współmierności</b> (<i>matching</i>): koszty mają trafić do tego samego okresu co przychody, które pomogły wygenerować.</p>
+  <ul class="tight">
+    <li><b>MSSF:</b> MSR 1 (par. 27–28, zasada memoriału) i Założenia koncepcyjne. Rozróżnienie accrual vs provision: MSR 37 par. 11.</li>
+    <li><b>Ustawa o rachunkowości:</b> art. 6 ust. 1 (memoriał), art. 6 ust. 2 (współmierność),
+      art. 39 ust. 2: <i>bierne rozliczenia międzyokresowe kosztów</i> „w wysokości prawdopodobnych zobowiązań przypadających na bieżący okres”.</li>
+  </ul>
+  <div class="box good">
+    <strong>Jedno zdanie do zapamiętania</strong>
+    Accrual przenosi koszt z „miesiąca faktury” do „miesiąca usługi”. Dzięki temu wyniki miesięczne są porównywalne,
+    a bilans pokazuje zobowiązanie, które realnie już mamy.
+  </div>
+  <h3>Accrual to nie to samo co…</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Pojęcie</th><th>Co to jest</th><th>Strona bilansu</th></tr></thead>
+    <tbody>
+      <tr><td><b>Accrual</b> (bierne RMK kosztów)</td><td>Usługa wykonana, faktury jeszcze nie ma. Kwota szacowana, ale z małą niepewnością.</td><td>Pasywa (zobowiązanie)</td></tr>
+      <tr><td><b>Provision</b> (rezerwa, MSR 37)</td><td>Zobowiązanie o <i>niepewnej kwocie lub terminie</i>: sprawa sądowa, gwarancje, restrukturyzacja.</td><td>Pasywa</td></tr>
+      <tr><td><b>Prepayment</b> (czynne RMK kosztów)</td><td>Odwrotność: zapłaciliśmy z góry (np. roczna licencja) i rozliczamy koszt w czasie.</td><td>Aktywa</td></tr>
+      <tr><td><b>Deferred income</b> (bierne RMK przychodów)</td><td>Klient zapłacił z góry, a usługi jeszcze nie wykonaliśmy.</td><td>Pasywa</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Uwaga językowa: w polskich firmach mówi się potocznie „rezerwa kosztowa” na accrual. W rozmowie po angielsku
+    i w kontekście MSSF mów <b>accrual</b>, nie <i>provision</i>, bo to dwie różne kategorie.</p>
+</section>
+
+<!-- ================================================================ 3 -->
+<section class="card" id="gloss">
+  <h2>3. Słowniczek: co jest czym w module</h2>
+  <dl class="gloss">
+    <dt>Accrual<small>rezerwa kosztowa / bierne RMK</small></dt>
+    <dd>Zapis na koniec miesiąca: <b>Wn konto kosztowe / Ma 2400</b>. Koszt trafia do wyniku tego miesiąca, a w bilansie
+      pojawia się zobowiązanie.</dd>
+
+    <dt>2400 Accrued expenses<small>konto rozliczeń</small></dt>
+    <dd>Konto bilansowe (pasywa), na którym „czekają” accruale. Saldo na koniec miesiąca = suma otwartych accruali.
+      Nic innego nie powinno tam leżeć. Na tym opiera się krok 3.</dd>
+
+    <dt>Auto-reversal<small>automatyczne odwrócenie</small></dt>
+    <dd>Pierwszego dnia kolejnego miesiąca system księguje zapis odwrotny (<b>Wn 2400 / Ma koszt</b>). Po co? Żeby faktura
+      mogła być zaksięgowana normalnie, w całości, na koszt. Wtedy w nowym miesiącu zostaje tylko różnica między
+      fakturą a szacunkiem. Nie trzeba ręcznie „parować” faktury z accrualem w księdze.</dd>
+
+    <dt>Settlement<small>rozliczenie</small></dt>
+    <dd>Porównanie faktury z wcześniejszym szacunkiem i zamknięcie tematu. W aplikacji: krok 1.</dd>
+
+    <dt>Variance<small>różnica</small></dt>
+    <dd><b>Faktura − szacunek.</b> Dodatnia oznacza, że niedoszacowaliśmy, i różnica obciąża koszty bieżącego miesiąca.
+      Ujemna oznacza przeszacowanie i zmniejsza koszty.</dd>
+
+    <dt>Tolerance<small>próg istotności</small></dt>
+    <dd>W demo: <b>5% szacunku, minimum 25 €</b>. Poniżej progu różnica jest akceptowana bez komentarza. Powyżej trzeba podać
+      powód, bo z tego uczymy się szacować lepiej i to jest dowód kontroli dla audytora. Minimum 25 € istnieje, żeby
+      przy małych kwotach nie tłumaczyć każdych 3 €.</dd>
+
+    <dt>Carry forward<small>przeniesienie</small></dt>
+    <dd>Faktury nie ma, ale usługa była i faktura przyjdzie. Accrual „przechodzi” na kolejny miesiąc: odwraca się 1-go
+      i zostaje zaksięgowany ponownie na koniec miesiąca. <b>Wpływ na wynik października = 0</b>, bo koszt był już we wrześniu.
+      W tabeli widać, ile dni jest otwarty (aging).</dd>
+
+    <dt>Release<small>rozwiązanie</small></dt>
+    <dd>Faktura nie przyjdzie (usługa anulowana). Auto-reversal z 1-go zostaje bez faktury, więc koszty bieżącego miesiąca
+      <b>maleją</b> o całą kwotę. To jest <i>zmiana szacunku</i> (MSR 8): ujmujemy ją w bieżącym okresie i nie poprawiamy września.</dd>
+
+    <dt>Basis<small>podstawa szacunku</small></dt>
+    <dd>Skąd się wzięła kwota. W demo są cztery rodzaje: <b>contract</b> (stała opłata z umowy), <b>average</b> (średnia
+      z 3 ostatnich faktur), <b>annual</b> (roczna opłata / 12), <b>carried</b> (z poprzedniego miesiąca). Do tego <b>manual</b>
+      (wpisane ręcznie). Accrual bez podstawy to pierwsze pytanie audytora.</dd>
+
+    <dt>Double counting<small>podwójne ujęcie</small></dt>
+    <dd>Accrual na koszt, na który faktura <i>już przyszła</i> i została zaksięgowana. Koszt wchodzi wtedy dwa razy.
+      W demo: Greenleaf Cleaning (faktura 7731/10). Domyślnie odznaczony, a po zaznaczeniu blokuje księgowanie.</dd>
+
+    <dt>Roll-forward<small>przejście sald</small></dt>
+    <dd>Otwarcie − odwrócone + nowe = zamknięcie. Pokazuje, jak konto przeszło z jednego miesiąca w drugi.</dd>
+
+    <dt>Tie-out<small>uzgodnienie</small></dt>
+    <dd>Porównanie salda z roll-forwardu (z listy accruali) z saldem konta 2400 w księdze. Różnica musi wynosić 0,00.</dd>
+
+    <dt>Reclass<small>przeksięgowanie</small></dt>
+    <dd>Przeniesienie błędnie zaksięgowanej pozycji na właściwe konto. W demo: paragon za taxi (86,40 €) zaksięgowany na 2400
+      zamiast na 6600 Travel. Zapis: <b>Wn 6600 / Ma 2400</b>.</dd>
+
+    <dt>Sign-off<small>zatwierdzenie</small></dt>
+    <dd>Formalne potwierdzenie, że konto jest uzgodnione. Dostępne dopiero wtedy, gdy różnica wynosi 0. Po zatwierdzeniu
+      okres jest zablokowany i nie da się już cofnąć księgowania.</dd>
+
+    <dt>Journal<small>polecenie księgowania</small></dt>
+    <dd>Podgląd zapisu przed wysłaniem: osobna linia Wn dla każdego accrualu i jedna zbiorcza linia Ma 2400.
+      Suma Wn = suma Ma.</dd>
+  </dl>
+</section>
+
+<!-- ================================================================ 4 -->
+<section class="card" id="cycle">
+  <h2>4. Cykl życia jednego accrualu</h2>
+  <p>Przykład: <b>Brightwater Utilities</b>, prąd za wrzesień. Szacunek 1 150,00 €, faktura 1 186,40 €.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Data</th><th>Zdarzenie</th><th>Wn</th><th>Ma</th><th class="num">Kwota</th><th>Efekt</th></tr></thead>
+    <tbody>
+      <tr><td>30 wrz</td><td>Accrual (szacunek)</td><td>6300 Utilities</td><td>2400</td><td class="num">1 150,00</td><td>Koszt we wrześniu ✔</td></tr>
+      <tr><td>1 paź</td><td>Auto-reversal</td><td>2400</td><td>6300</td><td class="num">1 150,00</td><td>2400 wraca do zera, w październiku na razie −1 150</td></tr>
+      <tr><td>8 paź</td><td>Faktura</td><td>6300</td><td>2000 AP</td><td class="num">1 186,40</td><td>Październik: −1 150 + 1 186,40 = <b>+36,40</b></td></tr>
+    </tbody>
+  </table></div>
+  <p>Wynik: wrzesień ponosi koszt 1 150 (najlepsza wiedza w chwili zamknięcia), październik tylko różnicę <b>36,40 €</b>.
+    W aplikacji „Settle” potwierdza dokładnie ten rachunek.</p>
+
+  <h3>Cztery możliwe zakończenia i ich wpływ na październik</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Sytuacja</th><th>Co klikasz</th><th>Wpływ na koszty października</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag exact">exact</span> faktura = szacunek</td><td>Settle</td><td class="num">0,00</td></tr>
+      <tr><td><span class="tag within">within</span> różnica w tolerancji</td><td>Settle</td><td>różnica (np. +36,40)</td></tr>
+      <tr><td><span class="tag over">over</span> różnica ponad tolerancję</td><td>Wybierz powód → Settle with comment</td><td>różnica (np. +75,00) + udokumentowany powód</td></tr>
+      <tr><td><span class="tag missing">missing</span>, faktura przyjdzie</td><td>Carry forward</td><td class="num">0,00 (odwrócone i zaksięgowane ponownie)</td></tr>
+      <tr><td><span class="tag missing">missing</span>, faktura nie przyjdzie</td><td>Release</td><td>−pełna kwota (np. −1 800,00)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="box warn">
+    <strong>Ważny niuans, o który ktoś może zapytać</strong>
+    W demo faktury są pokazane jako dane (numer, kwota, data), ale <b>nie są księgowane na AP</b> w tym module. Rozliczenie
+    pokazuje różnicę i jej wpływ na wynik, a nie pełne księgowanie faktury. W prawdziwym systemie faktura idzie przez moduł
+    zobowiązań (AP), a accrual jest z nią parowany.
+  </div>
+</section>
+
+<!-- ================================================================ 5 -->
+<section class="card" id="steps">
+  <h2>5. Trzy kroki w aplikacji, z liczbami</h2>
+
+  <h3>Krok 1: Settle September (rozliczenie zeszłego miesiąca)</h3>
+  <p>Saldo 2400 na 30 września: <b>5 990,00 €</b> (cztery accruale). 1 października wszystkie zostały odwrócone automatycznie.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Dostawca</th><th class="num">Szacunek</th><th class="num">Faktura</th><th class="num">Różnica</th><th>Status</th><th>Historia do opowiedzenia</th></tr></thead>
+    <tbody>
+      <tr><td>Quarry &amp; Co (księgowość)</td><td class="num">2 400,00</td><td class="num">2 400,00</td><td class="num">0,00</td><td><span class="tag exact">exact</span></td><td>Stała opłata z umowy: szacunek idealny.</td></tr>
+      <tr><td>Brightwater (prąd)</td><td class="num">1 150,00</td><td class="num">1 186,40</td><td class="num">+36,40</td><td><span class="tag within">within</span></td><td>3,2% &lt; próg 57,50 €. Akceptujemy bez komentarza.</td></tr>
+      <tr><td>Cloudstack (serwery)</td><td class="num">640,00</td><td class="num">715,00</td><td class="num">+75,00</td><td><span class="tag over">over</span></td><td>11,7% &gt; próg 32 €. Większy ruch przy premierze produktu: wymagany powód.</td></tr>
+      <tr><td>Byteforge (konsulting)</td><td class="num">1 800,00</td><td class="num">brak</td><td class="num">n/d</td><td><span class="tag missing">missing</span></td><td>Dni konsultingowe odwołane: <b>poprawna odpowiedź to Release</b>. Carry forward też jest dozwolony (np. żeby pokazać aging).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Dopóki wszystkie cztery nie są rozliczone, nie da się zaksięgować października. To celowe: najpierw zamykasz przeszłość,
+    potem szacujesz przyszłość, bo różnice z kroku 1 mówią, jak dobrze szacujesz.</p>
+
+  <h3>Krok 2: Book October (nowe accruale)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Dostawca</th><th>Konto</th><th>Podstawa</th><th class="num">Kwota</th></tr></thead>
+    <tbody>
+      <tr><td>Quarry &amp; Co</td><td>6700</td><td>Umowa, stała opłata</td><td class="num">2 400,00</td></tr>
+      <tr><td>Brightwater</td><td>6300</td><td>Średnia z lip/sie/wrz (1 098,30 · 1 121,90 · 1 186,40)</td><td class="num">1 135,53</td></tr>
+      <tr><td>Cloudstack</td><td>6500</td><td>Średnia z lip/sie/wrz (602,10 · 688,40 · 715,00)</td><td class="num">668,50</td></tr>
+      <tr><td>Meridian Audit</td><td>6700</td><td>Roczna opłata za audyt 14 400 / 12</td><td class="num">1 200,00</td></tr>
+      <tr><td>Greenleaf Cleaning</td><td>6400</td><td>Umowa, ale <b>faktura 7731/10 już jest</b> → domyślnie odznaczony</td><td class="num muted">(1 240,00)</td></tr>
+      <tr class="sum"><td colspan="3">Razem (bez carry forward)</td><td class="num">5 404,03</td></tr>
+      <tr><td colspan="3">+ Byteforge, jeśli w kroku 1 wybrano Carry forward</td><td class="num">1 800,00 → 7 204,03</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="tight">
+    <li><b>Dlaczego średnia, a nie ostatnia faktura?</b> Wygładza wahania (np. sezonowość prądu). Dla Cloudstack widać, że trend rośnie,
+      i to dobry moment, żeby ręcznie podnieść kwotę i pokazać edycję.</li>
+    <li><b>Dlaczego audyt 1/12?</b> Audyt roczny dotyczy całego roku obrotowego, więc koszt rozkładamy równo, zamiast wrzucać
+      14 400 € w miesiąc faktury.</li>
+    <li><b>Greenleaf:</b> to ta sama linia, którą naprawia się na wyciągu 014 w module Statements. Moduły są ze sobą spójne fabularnie.</li>
+    <li><b>Journal preview:</b> Wn każde konto kosztowe, Ma 2400 zbiorczo. Data 31 października, auto-reversal 1 listopada.</li>
+    <li><b>Kwoty netto:</b> accruale są bez VAT, bo VAT pojawia się dopiero z fakturą.</li>
+  </ul>
+
+  <h3>Krok 3: Roll-forward 2400 i sign-off</h3>
+  <div class="grid2">
+    <div class="table-wrap"><table>
+      <tbody>
+        <tr><td>Otwarcie 30 wrz</td><td class="num">5 990,00</td></tr>
+        <tr><td>− Odwrócone 1 paź</td><td class="num">−5 990,00</td></tr>
+        <tr><td>+ Accruale październik</td><td class="num">5 404,03</td></tr>
+        <tr class="sum"><td>Zamknięcie wg listy</td><td class="num">5 404,03</td></tr>
+        <tr><td>Saldo 2400 w księdze</td><td class="num">5 317,63</td></tr>
+        <tr class="sum"><td>Różnica</td><td class="num" style="color:var(--bad)">−86,40</td></tr>
+      </tbody>
+    </table><p class="muted">(wariant z Release Byteforge; przy Carry forward obie kwoty są o 1 800 wyższe, a różnica ta sama)</p></div>
+    <div>
+      <p><b>Skąd −86,40?</b> Ktoś zaksięgował 14 października paragon za taxi (JE-1042) na 2400 zamiast na 6600 Travel.
+        To prawdziwy, częsty błąd: konto rozliczeniowe staje się „śmietnikiem”.</p>
+      <p><b>Co robisz:</b> „Reclassify to 6600” (Wn 6600 / Ma 2400). Różnica spada do 0, przycisk Sign off się odblokowuje.</p>
+      <p><b>Po co to w demo:</b> żeby było widać, że uzgodnienie to <i>kontrola</i>, a nie formalność. Gdyby zawsze wychodziło 0,
+        nie byłoby sensu go robić.</p>
+    </div>
+  </div>
+
+  <h3>Kafelek „Effect on October's P&amp;L”</h3>
+  <p>Netto wpływ cyklu accruali na koszty października: <b>nowe accruale + różnice z rozliczeń − rozwiązane</b>.
+    Accruale przeniesione (carry forward) liczą się jako 0.</p>
+  <ul class="tight">
+    <li>Wariant Release: 5 404,03 + 111,40 − 1 800,00 = <b>3 715,43 €</b></li>
+    <li>Wariant Carry forward: 5 404,03 + 111,40 = <b>5 515,43 €</b></li>
+  </ul>
+</section>
+
+<!-- ================================================================ 6 -->
+<section class="card" id="demo">
+  <h2>6. Scenariusz pokazu (ok. 3 minuty)</h2>
+  <p class="muted">Najpierw „Reset demo” w lewym dolnym rogu, żeby zacząć od czystego stanu.</p>
+  <ol class="script">
+    <li><b>Wejdź w Accruals.</b> Pokaż pasek trzech kroków i trzy kafelki.
+      <span class="say">„Faktury przychodzą z opóźnieniem, a koszt ma trafić do miesiąca, w którym usługa była wykonana. Ten moduł to miesięczny proces, który to załatwia.”</span></li>
+    <li><b>Krok 1: Quarry &amp; Co → Settle.</b>
+      <span class="say">„Stała opłata z umowy, szacunek trafiony co do centa.”</span></li>
+    <li><b>Brightwater → Settle.</b>
+      <span class="say">„36 euro różnicy, poniżej progu 5%, więc system akceptuje to bez tłumaczenia.”</span></li>
+    <li><b>Cloudstack: najpierw spróbuj kliknąć bez powodu</b> (przeglądarka wymusi wybór), potem wybierz „Higher usage than estimated”.
+      <span class="say">„Tu różnica jest 11,7%, więc trzeba ją wyjaśnić. To jest ślad dla audytora i informacja, żeby następnym razem szacować lepiej.”</span></li>
+    <li><b>Byteforge → Release</b> (przeczytaj podpowiedź o anulowaniu).
+      <span class="say">„Usługa się nie odbyła, więc rozwiązuję accrual. Te 1 800 wraca do wyniku października jako zmiana szacunku. Września nie ruszamy.”</span></li>
+    <li><b>Krok 2:</b> pokaż chipy z historią przy Brightwater, zmień kwotę przy Cloudstack (np. na 720), zaznacz Greenleaf.
+      <span class="say">„Każda kwota ma podstawę. A tu system mnie łapie: na Greenleaf jest już faktura, więc accrual zaksięgowałby koszt drugi raz.”</span>
+      Odznacz Greenleaf z powrotem.</li>
+    <li><b>Pokaż Journal preview → Book accruals.</b>
+      <span class="say">„Wn koszty, Ma 2400, z automatycznym odwróceniem pierwszego listopada.”</span></li>
+    <li><b>Krok 3:</b> wskaż różnicę −86,40, rozwiń „Show the 2400 ledger entries”, kliknij Reclassify, potem Sign off.
+      <span class="say">„Lista accruali i konto w księdze się nie zgadzają, bo ktoś wrzucił na 2400 paragon za taxi. Przeksięgowuję, różnica 0, zatwierdzam, okres zablokowany.”</span></li>
+    <li><b>Zakończenie:</b> pokaż misję odhaczoną w „Things to try”.
+      <span class="say">„W skrócie: oszacuj, rozlicz z rzeczywistością, wyjaśnij różnice, uzgodnij konto, podpisz. To jest month-end close w miniaturze.”</span></li>
+  </ol>
+  <div class="box good"><strong>Bonus, jeśli jest czas</strong>
+    Kliknij kropkę „ERP system” na pasku statusu (symulacja awarii) i spróbuj coś rozliczyć. Pojawi się komunikat, że ERP jest offline i nic nie zostało zaksięgowane.</div>
+</section>
+
+<!-- ================================================================ 7 -->
+<section class="card qa" id="qa">
+  <h2>7. Trudne pytania i odpowiedzi</h2>
+
+  <details><summary>Po co auto-reversal? Nie prościej rozliczyć accrual z fakturą bezpośrednio?</summary><div>
+    Można (tzw. metoda „clearing”), ale auto-reversal jest standardem, bo upraszcza księgowanie faktur: AP księguje fakturę
+    normalnie, w całości, nie musi wiedzieć, że był accrual. Odwrócenie + faktura daje automatycznie różnicę. Wada: jeśli
+    faktura nie przyjdzie, trzeba accrual zaksięgować ponownie, i dlatego w module jest Carry forward.
+  </div></details>
+
+  <details><summary>Skąd 5% i 25 €?</summary><div>
+    To parametr polityki rachunkowości / istotności. W praktyce ustala go controlling lub kierownik zespołu, często w połączeniu
+    z progiem kwotowym. 5% z minimum 25 € to rozsądna wartość demonstracyjna. W kodzie to dwie stałe
+    (<code>TOLERANCE_PCT</code>, <code>TOLERANCE_MIN</code>).
+  </div></details>
+
+  <details><summary>Dlaczego rozwiązany accrual zmniejsza koszty października, a nie poprawia września?</summary><div>
+    Bo wrzesień zamknięto na podstawie najlepszej wiedzy w tamtym momencie. Nowa informacja to <b>zmiana szacunku</b>
+    (MSR 8), którą ujmuje się prospektywnie, w bieżącym okresie. Korekta wstecz dotyczy tylko błędów (np. pomyłki arytmetycznej)
+    i to, istotnych.
+  </div></details>
+
+  <details><summary>Co jeśli faktura za wrzesień przyjdzie po zamknięciu, ale przed publikacją raportu?</summary><div>
+    To kwestia <b>cut-off</b>. Jeśli różnica jest istotna, można skorygować wrzesień przed publikacją (w sprawozdaniach rocznych
+    to zdarzenie po dniu bilansowym korygujące, MSR 10). W miesięcznym zamknięciu zwykle obowiązuje termin zamknięcia, a różnica idzie
+    do kolejnego miesiąca, tak jak w module.
+  </div></details>
+
+  <details><summary>Skąd w prawdziwej firmie bierze się lista accruali?</summary><div>
+    Najczęściej z kilku źródeł: <b>GRNI</b> (goods received not invoiced) z modułu zakupów, czyli zamówienia z potwierdzonym
+    odbiorem bez faktury; umowy z opłatami stałymi; historia faktur (średnie); informacje od budżetów i właścicieli kosztów
+    („mieliśmy w październiku 3 dni szkoleń”). Demo symuluje trzy ostatnie źródła, bez modułu zamówień.
+  </div></details>
+
+  <details><summary>Czy accrual zawiera VAT?</summary><div>
+    Nie. Accrual to koszt netto. VAT naliczony pojawia się dopiero z fakturą.
+  </div></details>
+
+  <details><summary>A podatkowo (CIT)?</summary><div>
+    Ostrożnie, to nie jest mój obszar. W skrócie: koszty ujęte przez accruale często nie są jeszcze kosztem podatkowym
+    w momencie ujęcia, więc powstają różnice przejściowe i podatek odroczony. Szczegóły zależą od rodzaju kosztu, więc
+    tu odsyłam do podatkowców. <i>(Lepiej tak powiedzieć niż zgadywać.)</i>
+  </div></details>
+
+  <details><summary>Co jeśli accrual wisi kilka miesięcy?</summary><div>
+    To sygnał ostrzegawczy (aging). Albo faktura zaginęła, albo usługi nie było i trzeba rozwiązać. Typowa polityka:
+    przegląd wszystkiego starszego niż 60–90 dni. W module przy przeniesionym accrualu widać, ile dni jest otwarty. Automatycznej
+    flagi 90 dni nie ma, to naturalny kolejny krok.
+  </div></details>
+
+  <details><summary>Kto zatwierdza? Gdzie jest zasada czterech oczu?</summary><div>
+    W prawdziwym procesie przygotowujący (preparer) i zatwierdzający (reviewer) to dwie różne osoby (maker-checker). W demo jest
+    jeden użytkownik, więc Sign off robisz sam. To świadome uproszczenie, bo sesja demo jest jednoosobowa.
+  </div></details>
+
+  <details><summary>Czym się różni od uzgodnienia bankowego w tym samym demo?</summary><div>
+    Uzgodnienie bankowe porównuje księgę z <b>zewnętrznym źródłem</b> (wyciągiem). Uzgodnienie 2400 porównuje konto z
+    <b>wewnętrzną listą szczegółową</b> (subledger accruali). Logika jest ta sama: saldo z księgi musi się zgadzać ze źródłem szczegółowym.
+  </div></details>
+
+  <details><summary>Czy to jest narzędzie, którego używasz w pracy?</summary><div>
+    „Ledgerly to publiczna, napisana od zera wersja pomysłu z mojej pracy. Wszystkie dane, firmy i kwoty są fikcyjne.” Nie
+    wchodź w szczegóły systemów pracodawcy.
+  </div></details>
+</section>
+
+<!-- ================================================================ 8 -->
+<section class="card" id="simplified">
+  <h2>8. Co jest uproszczone (powiedz to sam, zanim ktoś zapyta)</h2>
+  <p>Przyznanie uproszczeń z własnej inicjatywy wypada dużo lepiej niż bycie na nich przyłapanym.</p>
+  <ul class="tight">
+    <li>Jedna spółka, jedna waluta (EUR), jeden miesiąc.</li>
+    <li>Faktury są pokazane, ale nie księgowane na AP. Moduł pokazuje różnicę i jej wpływ na wynik.</li>
+    <li>Brak modułu zakupów i GRNI. Podstawy szacunku to umowa, średnia, roczna/12 i przeniesienie.</li>
+    <li>Księga accruali jest osobna od księgi bankowej w demo (konto 2400 nie przechodzi przez moduł bankowy).</li>
+    <li>Jeden użytkownik: brak rozdzielenia preparer / reviewer.</li>
+    <li>Błąd z taxi jest „podłożony”, żeby kontrola miała co wykryć. Podobnie 4 błędy w rekoncyliacji bankowej.</li>
+    <li>Brak automatycznej flagi aging &gt; 90 dni i brak załączników (skan faktury, mail od dostawcy).</li>
+    <li>Stan żyje w pamięci sesji (3 h), nic nie jest zapisywane na stałe.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ 9 -->
+<section class="card" id="dont">
+  <h2>9. Czego nie mówić</h2>
+  <div class="box bad">
+    <ul class="tight" style="margin:0">
+      <li>❌ „Accrual to provision.” → ✅ To różne kategorie (MSR 37.11). Accrual ma mniejszą niepewność.</li>
+      <li>❌ „Release koryguje wrzesień.” → ✅ To zmiana szacunku, ujęta w październiku.</li>
+      <li>❌ „Carry forward to dodatkowy koszt października.” → ✅ Netto zero: odwrócone i zaksięgowane ponownie.</li>
+      <li>❌ „Accrual jest z VAT.” → ✅ Netto, VAT pojawia się z fakturą.</li>
+      <li>❌ „Bez accruali październik byłby o X bardziej rentowny.” → ✅ Bez accruali wynik zależy od terminu faktur, a nie od tego, kiedy była usługa.</li>
+      <li>❌ „Różnica na 2400 to błąd systemu.” → ✅ To błędne ręczne księgowanie innego dokumentu, wykryte przez kontrolę.</li>
+      <li>❌ Nazwy prawdziwych systemów, klientów lub kwot z pracy. → ✅ „Fikcyjne dane, pomysł z praktyki.”</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================================================================ 10 -->
+<section class="card" id="tech">
+  <h2>10. Strona techniczna (gdy pyta developer)</h2>
+  <ul class="tight">
+    <li><b><code>app/domain/accruals.py</code></b>: czysty Python, zero kodu webowego. Klasa <code>AccrualBook</code> trzyma stan
+      jednego odwiedzającego, a metody <code>settle / carry / release / book / reclassify_stray / sign_off</code> rzucają
+      <code>ValueError</code> z czytelnym komunikatem, gdy reguła biznesowa jest złamana.</li>
+    <li><b>Kwoty na <code>Decimal</code></b>, zaokrąglanie <code>ROUND_HALF_UP</code> do centa. Nigdy float dla pieniędzy.</li>
+    <li><b>Reguły egzekwowane na serwerze:</b> blokada księgowania (<code>blockers()</code>), wymagany powód ponad tolerancją,
+      blokada edycji po zaksięgowaniu, blokada cofnięcia po sign-off. UI tylko je odzwierciedla.</li>
+    <li><b><code>app/state.py</code></b>: każda akcja wymagająca ERP sprawdza dostępność źródła (symulacja awarii) i zapisuje zdarzenie w dzienniku.</li>
+    <li><b><code>app/main.py</code></b>: trasy <code>/accruals/*</code> zwracają fragment HTML (HTMX). Wspólny helper zamienia błędy
+      domenowe na toast „warning”, a awarię na „danger”.</li>
+    <li><b>Szablon:</b> <code>partials/accruals_body.html</code>. Każda akcja podmienia cały blok <code>#accruals</code>,
+      więc kafelki, kroki i roll-forward są zawsze spójne.</li>
+    <li><b>Testy:</b> <code>tests/test_accruals.py</code>, 16 testów (domena + HTTP): statusy dopasowań, tolerancja, carry/release,
+      podwójne ujęcie, bilansowanie journala, roll-forward z reclassem, zerowy wpływ carry forward, awaria ERP.</li>
+    <li><b>Deterministyczne dane:</b> wszystkie kwoty są stałe, więc liczby w tej notatce zawsze zgadzają się z aplikacją.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ 11 -->
+<section class="card" id="numbers">
+  <h2>11. Liczby w pigułce</h2>
+  <div class="table-wrap"><table>
+    <tbody>
+      <tr><td>Saldo 2400 na 30 września (4 accruale)</td><td class="num">5 990,00 €</td></tr>
+      <tr><td>Różnice z rozliczeń (36,40 + 75,00)</td><td class="num">+111,40 €</td></tr>
+      <tr><td>Byteforge do rozwiązania lub przeniesienia</td><td class="num">1 800,00 €</td></tr>
+      <tr><td>Nowe accruale październik (domyślne kwoty)</td><td class="num">5 404,03 €</td></tr>
+      <tr><td>… z Byteforge przeniesionym</td><td class="num">7 204,03 €</td></tr>
+      <tr><td>Błąd na 2400 (taxi, JE-1042, 14 października)</td><td class="num">86,40 €</td></tr>
+      <tr><td>Tolerancja: Brightwater / Cloudstack</td><td class="num">57,50 € / 32,00 €</td></tr>
+      <tr><td>Wpływ na koszty października: Release / Carry</td><td class="num">3 715,43 € / 5 515,43 €</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Liczby przy domyślnych kwotach. Jeśli w trakcie pokazu zmienisz kwotę propozycji, sumy się odpowiednio przesuną.</p>
+</section>
+
+</div>
+</body>
+</html>

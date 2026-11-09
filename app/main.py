@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from .domain.accruals import EXPENSE_ACCOUNTS, VARIANCE_REASONS
 from .domain.models import CHART_OF_ACCOUNTS, POSTABLE_ACCOUNTS
 from .domain.reconciliation import KIND_TITLES
 from .state import SOURCES, DemoSession, SessionStore, SourceOffline, month, statement_pdf
@@ -41,7 +42,8 @@ def money(v, signed: bool = False) -> str:
 
 templates.env.filters["money"] = money
 templates.env.globals.update(ACCOUNTS=CHART_OF_ACCOUNTS, POSTABLE=POSTABLE_ACCOUNTS, SOURCES=SOURCES,
-                             KIND_TITLES=KIND_TITLES)
+                             KIND_TITLES=KIND_TITLES, EXPENSE_ACCOUNTS=EXPENSE_ACCOUNTS,
+                             VARIANCE_REASONS=VARIANCE_REASONS)
 
 
 async def latency(low: float = 0.35, high: float = 0.9) -> None:
@@ -251,6 +253,124 @@ async def reconciliation_fix(request: Request, ref: str):
         toast = ("success", "All bookkeeping mistakes fixed - the books agree with the bank")
     return render(request, "partials/reconciliation_result.html", s, new, rec=rec, focus=None,
                   chart=balance_chart(rec.days), toast=toast, just_fixed=ref)
+
+
+# ------------------------------------------------------------------------- accruals
+
+
+def _accruals(request: Request, s: DemoSession, new=False, toast=None, **extra):
+    return render(request, "partials/accruals_body.html", s, new, toast=toast, b=s.accruals,
+                  events=("refresh-missions",), **extra)
+
+
+def _amount(text: str) -> Decimal | None:
+    try:
+        return Decimal(text.replace(",", "").replace("€", "").replace(" ", "").strip())
+    except InvalidOperation:
+        return None
+
+
+@app.get("/accruals", response_class=HTMLResponse)
+async def accruals_page(request: Request):
+    s, new = session_of(request)
+    return render(request, "accruals.html", s, new, page="accruals", b=s.accruals)
+
+
+async def _accrual_action(request: Request, action, success: str | None, delay=(0.2, 0.5), **extra):
+    """Run one state change and re-render the workbook; domain errors become warning toasts."""
+    s, new = session_of(request)
+    await latency(*delay)
+    try:
+        result = action(s)
+    except SourceOffline as e:
+        return _accruals(request, s, new, toast=("danger", f"{e.name} is offline - nothing was booked"), **extra)
+    except (ValueError, StopIteration) as e:
+        msg = str(e) if isinstance(e, ValueError) else "That item doesn't exist"
+        return _accruals(request, s, new, toast=("warning", msg), **extra)
+    text = success(result) if callable(success) else success
+    return _accruals(request, s, new, toast=("success", text) if text else None, **extra)
+
+
+@app.post("/accruals/settle/{accrual_id}", response_class=HTMLResponse)
+async def accrual_settle(request: Request, accrual_id: str, reason: str = Form("")):
+    return await _accrual_action(
+        request, lambda s: s.settle_accrual(accrual_id, reason or None),
+        lambda st: f"Settled with invoice {st.invoice}" + (f" - {money(st.variance, True)} to this month's P&L" if st.variance else ""),
+        flash=accrual_id)
+
+
+@app.post("/accruals/carry/{accrual_id}", response_class=HTMLResponse)
+async def accrual_carry(request: Request, accrual_id: str):
+    return await _accrual_action(request, lambda s: s.carry_accrual(accrual_id),
+                                 "Carried forward - it now appears in this month's proposals", flash=accrual_id)
+
+
+@app.post("/accruals/release/{accrual_id}", response_class=HTMLResponse)
+async def accrual_release(request: Request, accrual_id: str):
+    return await _accrual_action(request, lambda s: s.release_accrual(accrual_id),
+                                 lambda st: f"Released - {money(-st.variance)} back to the P&L", flash=accrual_id)
+
+
+@app.post("/accruals/undo/{accrual_id}", response_class=HTMLResponse)
+async def accrual_undo(request: Request, accrual_id: str):
+    return await _accrual_action(request, lambda s: s.accruals.undo_settlement(accrual_id), None, delay=(0, 0.1))
+
+
+@app.post("/accruals/toggle/{pid}", response_class=HTMLResponse)
+async def accrual_toggle(request: Request, pid: str):
+    return await _accrual_action(request, lambda s: s.accruals.toggle(pid), None, delay=(0, 0.1))
+
+
+@app.post("/accruals/amount/{pid}", response_class=HTMLResponse)
+async def accrual_amount(request: Request, pid: str, amount: str = Form(...)):
+    value = _amount(amount)
+
+    def action(s):
+        if value is None:
+            raise ValueError("That doesn't look like an amount")
+        s.accruals.set_amount(pid, value)
+    return await _accrual_action(request, action, None, delay=(0, 0.1))
+
+
+@app.post("/accruals/manual", response_class=HTMLResponse)
+async def accrual_manual(request: Request, supplier: str = Form(""), description: str = Form(""),
+                         account: str = Form(""), amount: str = Form("")):
+    value = _amount(amount)
+
+    def action(s):
+        if value is None:
+            raise ValueError("That doesn't look like an amount")
+        return s.accruals.add_manual(supplier, description, account, value)
+    return await _accrual_action(request, action, lambda c: f"Accrual for {c.supplier} added")
+
+
+@app.post("/accruals/manual/{pid}/remove", response_class=HTMLResponse)
+async def accrual_manual_remove(request: Request, pid: str):
+    return await _accrual_action(request, lambda s: s.accruals.remove_manual(pid), None, delay=(0, 0.1))
+
+
+@app.post("/accruals/book", response_class=HTMLResponse)
+async def accrual_book(request: Request):
+    return await _accrual_action(
+        request, lambda s: s.book_accruals(),
+        lambda lines: f"Journal posted: {len(lines)} lines, auto-reversal scheduled", delay=(0.6, 1.2))
+
+
+@app.post("/accruals/unbook", response_class=HTMLResponse)
+async def accrual_unbook(request: Request):
+    return await _accrual_action(request, lambda s: s.unbook_accruals(), "Booking reversed - you can edit again")
+
+
+@app.post("/accruals/reclassify", response_class=HTMLResponse)
+async def accrual_reclassify(request: Request):
+    return await _accrual_action(request, lambda s: s.reclassify_stray(),
+                                 lambda e: f"{e.ref} moved to account {e.correct_account}")
+
+
+@app.post("/accruals/signoff", response_class=HTMLResponse)
+async def accrual_signoff(request: Request):
+    return await _accrual_action(request, lambda s: s.sign_off_accruals(),
+                                 "Signed off - accrued expenses are closed for the month")
 
 
 # ------------------------------------------------------------------------- shared bits
