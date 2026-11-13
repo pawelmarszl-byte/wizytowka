@@ -2,11 +2,11 @@
 
 **A small finance back-office tool that reads bank statement PDFs, posts them to the ledger and proves the books match the bank.**
 
-[![CI](https://github.com/YOUR-GITHUB-USER/ledgerly/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-GITHUB-USER/ledgerly/actions/workflows/ci.yml)
+[![CI](https://github.com/pawelmarszl-byte/wizytowka/actions/workflows/ci.yml/badge.svg)](https://github.com/pawelmarszl-byte/wizytowka/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12-3b4fd8)
 ![FastAPI + HTMX](https://img.shields.io/badge/FastAPI-HTMX-3b4fd8)
 
-### ▶ [Try the live demo](https://ledgerly-demo.onrender.com/demo) · [About the author](https://ledgerly-demo.onrender.com)
+### ▶ [Try the live demo](https://pawelmarszalek.onrender.com/demo) · [About the author](https://pawelmarszalek.onrender.com)
 
 > Hosted on Render's free tier. If nobody has visited for a while, **the first load takes ~30 seconds** while the server wakes up.
 > Everything is fictional: the bank, the company and every number.
@@ -100,10 +100,6 @@ tests/               domain, HTTP flow, and a "no real company names" guard
 ```
 
 ## Run locally
-
-On Windows just double-click **`Start Ledgerly.bat`**: it installs the dependencies if needed, starts the server and opens the browser.
-
-Or manually:
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate

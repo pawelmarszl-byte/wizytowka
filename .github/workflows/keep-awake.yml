@@ -1,0 +1,30 @@
+# Keeps the free Render instance awake during the day, so visitors don't wait ~30 s for a cold start.
+# Render puts a free service to sleep after 15 minutes without traffic; this pings it every 5 minutes (GitHub often runs schedules late).
+#
+# Optional: to ping a different address, set a repository variable (Settings -> Secrets and variables -> Actions):
+#   Name:  SITE_URL      Value: https://<your-service>.onrender.com   (no trailing slash)
+#
+# Hours: GitHub cron runs in UTC. 05-22 UTC = 07:00-00:59 in Polish summer time, 06:00-23:59 in winter time.
+# Note: GitHub pauses scheduled workflows after 60 days without any commit in the repo (it emails you first).
+name: Keep awake
+
+on:
+  schedule:
+    - cron: "*/5 5-22 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping health check
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://pawelmarszalek.onrender.com' }}
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            echo "::warning::SITE_URL repository variable is not set - nothing to ping."
+            exit 0
+          fi
+          curl --silent --show-error --fail --retry 3 --retry-delay 10 --max-time 90 \
+               --output /dev/null --write-out "HTTP %{http_code} in %{time_total}s\n" "$SITE_URL/healthz"

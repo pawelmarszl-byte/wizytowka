@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local-only files (kept on disk, not published)
+PROFIL.JPG
+notes/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Original CV dropped in the project root (the site serves the copy in app/static/cv/)
+/CV *.pdf
+
+# CV is not published yet
+app/static/cv/

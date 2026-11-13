@@ -13,7 +13,8 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -28,9 +29,43 @@ COOKIE = "ledgerly_session"
 # Simulated network latency; set LEDGERLY_FAST=1 (tests) to skip it.
 FAST = os.environ.get("LEDGERLY_FAST") == "1"
 
+GITHUB_URL = "https://github.com/pawelmarszl-byte/wizytowka"
+
+
+class CachedStatic(StaticFiles):
+    """Static files: cached for a year when the URL carries a ?v= fingerprint (see asset()), revalidated otherwise."""
+
+    async def get_response(self, path, scope):
+        resp = await super().get_response(path, scope)
+        versioned = b"v=" in scope.get("query_string", b"")
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable" if versioned else "no-cache"
+        return resp
+
+
 app = FastAPI(title="Ledgerly", docs_url=None, redoc_url=None)
-app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+app.add_middleware(GZipMiddleware, minimum_size=800)
+app.mount("/static", CachedStatic(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
+
+
+def asset(path: str) -> str:
+    """URL of a static file with its modification time as a fingerprint, so it can be cached for a long time."""
+    try:
+        v = int((BASE / "static" / path).stat().st_mtime)
+    except OSError:
+        v = 0
+    return f"/static/{path}?v={v}"
+
+
+def site_url(request: Request) -> str:
+    """Public address of the site (SITE_URL if set, otherwise taken from the request) - no trailing slash."""
+    if os.environ.get("SITE_URL"):
+        return os.environ["SITE_URL"].rstrip("/")
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme).split(",")[0].strip()
+    return f"{scheme}://{request.url.netloc}"
+
+
+templates.env.globals.update(asset=asset, GITHUB_URL=GITHUB_URL)
 store = SessionStore()
 
 
@@ -81,7 +116,25 @@ def offline(request: Request, s: DemoSession, err: SourceOffline, new: bool = Fa
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Personal landing page; the demo lives under /demo."""
-    return templates.TemplateResponse(request, "home.html", {})
+    return templates.TemplateResponse(request, "home.html", {"site": site_url(request)})
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+async def robots(request: Request):
+    return "\n".join(["User-agent: *", "Allow: /", f"Sitemap: {site_url(request)}/sitemap.xml", ""])
+
+
+@app.get("/sitemap.xml")
+async def sitemap(request: Request):
+    site = site_url(request)
+    urls = "".join(f"<url><loc>{site}{path}</loc></url>" for path in ("/", "/demo", "/about"))
+    xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
+    return Response(xml, media_type="application/xml")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return RedirectResponse(asset("img/logo.svg"), status_code=301)
 
 
 @app.get("/demo", response_class=HTMLResponse)
