@@ -17,6 +17,3 @@ Thumbs.db
 
 # Original CV dropped in the project root (the site serves the copy in app/static/cv/)
 /CV *.pdf
-
-# CV is not published yet
-app/static/cv/
