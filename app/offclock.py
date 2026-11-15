@@ -104,8 +104,10 @@ TRIPS: tuple[Trip, ...] = (
          "Late April on the Penken. The season was ending: more rock than snow on the ridge, and the big white "
          "peaks only in the distance.",
          (Photo("austria-1", (2000, 1333), "A rocky ridge with patches of snow and a snowy mountain range under clouds",
-                "End of the season above the Zillertal."),),
-         "aside"),
+                "End of the season above the Zillertal."),
+          Photo("austria-2", (2000, 1333), "A snowy peak glowing orange in the last light above a dark valley",
+                "Last light over the valley.")),
+         "pair"),
     Trip("france", "02.2025", "Les 3 Vallées", "French Alps", "Downhill",
          "A week of downhill in the Three Valleys, one of the largest linked ski areas there is. Long days, black "
          "runs, and one local who watched it all from the trees.",
