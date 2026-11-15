@@ -296,6 +296,13 @@
         <div><dt>Why it matters</dt><dd>Four degrees in the humanities taught me to explain complicated things simply,
           which helps every time finance meets IT.</dd></div>
       </dl>
+      <a class="outside" href="/off-the-clock" aria-label="Step outside: photos and a map from my trips">
+        {% for p in teaser %}
+        <img src="{{ asset('img/offclock/' ~ p.name ~ '-s.webp') }}" width="{{ p.small_width }}" height="{{ (p.small_width * p.size[1] / p.size[0]) | round | int }}"
+             loading="lazy" decoding="async" alt="{{ p.alt }}">
+        {% endfor %}
+        <span class="outside-cta"><span>Step outside <span aria-hidden="true">→</span></span><small>Ten trips, one camera</small></span>
+      </a>
     </section>
 
     <!-- ============================================================ contact -->

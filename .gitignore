@@ -17,3 +17,6 @@ Thumbs.db
 
 # Original CV dropped in the project root (the site serves the copy in app/static/cv/)
 /CV *.pdf
+
+# Original photos (the site serves resized copies from app/static/img/offclock/)
+/Zdjecia/

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Off the clock · Paweł Marszałek</title>
+  <meta name="description" content="Paweł Marszałek off the clock: ski touring, downhill, via ferratas and a bike, photographed on a Fujifilm X-T30 II across ten trips in Europe and the Caucasus.">
+  <meta property="og:title" content="Off the clock · Paweł Marszałek">
+  <meta property="og:description" content="Ski touring, via ferratas and a bike: ten trips, one camera.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ site }}/off-the-clock">
+  <meta property="og:image" content="{{ site }}/static/img/offclock/bieszczady-1-l.webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="{{ site }}/off-the-clock">
+  <meta name="theme-color" content="#0b1216">
+  <link rel="icon" href="{{ asset('img/logo.svg') }}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" type="image/webp" imagesizes="100vw"
+        imagesrcset="{{ asset('img/offclock/bieszczady-1-s.webp') }} 900w, {{ asset('img/offclock/bieszczady-1-l.webp') }} 2000w">
+  <link rel="stylesheet" href="{{ asset('css/offclock.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- ============================================================ hero -->
+  <header class="hero">
+    <img class="hero-img" alt="Paweł on touring skis on a snowy ridge in the Bieszczady, hills to the horizon"
+         width="2000" height="1333" fetchpriority="high"
+         src="{{ asset('img/offclock/bieszczady-1-l.webp') }}"
+         srcset="{{ asset('img/offclock/bieszczady-1-s.webp') }} 900w, {{ asset('img/offclock/bieszczady-1-l.webp') }} 2000w" sizes="100vw">
+    <nav class="topbar wrap" aria-label="Site">
+      <a class="back" href="/"><span aria-hidden="true">←</span> Back to work</a>
+      <span class="clock" aria-hidden="true"><i></i>Off the clock</span>
+    </nav>
+    <div class="hero-text wrap">
+      <p class="eyebrow">Paweł Marszałek · after hours</p>
+      <h1>Where the spreadsheets end.</h1>
+      <p class="lede">Skis, a bike and a camera. Mostly ski touring and downhill, sometimes a via ferrata, and once
+        a lap around a whole peninsula.</p>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============================================================ map + trip log -->
+    <section class="atlas wrap" aria-labelledby="atlas-title">
+      <div class="atlas-head">
+        <p class="eyebrow">Trip log</p>
+        <h2 id="atlas-title">{{ trips | length }} entries, none of them in a ledger.</h2>
+      </div>
+      <div class="atlas-grid">
+        <div class="map">{% include "partials/offclock_map.html" ignore missing %}</div>
+        <ol class="log">
+          {% for t in trips %}
+          <li>
+            <a href="#{{ t.slug }}">
+              <span class="log-when">{{ t.when }}</span>
+              <span class="log-place"><b>{{ t.place }}</b><small>{{ t.country }}</small></span>
+              <span class="log-what">{{ t.activity }}</span>
+            </a>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================================================ chapters -->
+    {% for t in trips %}
+    <section class="trip wrap layout-{{ t.layout }}" id="{{ t.slug }}" aria-labelledby="{{ t.slug }}-title">
+      <div class="trip-head">
+        <p class="trip-meta"><span>{{ t.when }}</span><span>{{ t.country }}</span><span>{{ t.activity }}</span></p>
+        <h2 id="{{ t.slug }}-title">{{ t.place }}</h2>
+        <p class="story">{{ t.story }}</p>
+      </div>
+      <div class="gallery">
+        {% for row in t.photo_rows %}
+        <div class="frames">
+          {% for p in row %}
+          <figure class="frame{% if p.portrait %} is-portrait{% endif %}" style="--ar: {{ '%.3f' | format(p.size[0] / p.size[1]) }}">
+            <a href="{{ asset('img/offclock/' ~ p.name ~ '-l.webp') }}" data-zoom data-caption="{{ p.caption }}"
+               data-w="{{ p.size[0] }}" data-h="{{ p.size[1] }}">
+              <img alt="{{ p.alt }}" width="{{ p.size[0] }}" height="{{ p.size[1] }}" loading="lazy" decoding="async"
+                   src="{{ asset('img/offclock/' ~ p.name ~ '-s.webp') }}"
+                   srcset="{{ asset('img/offclock/' ~ p.name ~ '-s.webp') }} {{ p.small_width }}w, {{ asset('img/offclock/' ~ p.name ~ '-l.webp') }} {{ p.size[0] }}w"
+                   sizes="(max-width: 760px) 100vw, {{ {'solo': 460, 'aside': 620, 'trio': 420, 'mosaic': 760}.get(t.layout, 600) }}px">
+            </a>
+            <figcaption>{{ p.caption }}</figcaption>
+          </figure>
+          {% endfor %}
+          {% if t.layout == "with-map" %}
+          <figure class="frame route" style="--ar: .9">
+            {% include "partials/offclock_istria.html" ignore missing %}
+            <figcaption>Four days, one loop. The line is approximate.</figcaption>
+          </figure>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </main>
+
+  <footer class="foot wrap">
+    <p class="kit">Shot on a Fujifilm X-T30 II. The two oldest frames are from a phone.</p>
+    <a class="back" href="/"><span aria-hidden="true">←</span> Back to work</a>
+    <p class="copy">© <span id="year">2026</span> Paweł Marszałek</p>
+  </footer>
+
+  <dialog class="zoom" id="zoom" aria-label="Photo">
+    <button type="button" class="zoom-close" aria-label="Close">×</button>
+    <button type="button" class="zoom-nav zoom-prev" aria-label="Previous photo">‹</button>
+    <figure>
+      <img id="zoom-img" alt="">
+      <figcaption id="zoom-cap"></figcaption>
+    </figure>
+    <button type="button" class="zoom-nav zoom-next" aria-label="Next photo">›</button>
+  </dialog>
+
+  <script>
+    (function () {
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      // Photo viewer: a native <dialog>. Without JS the links simply open the large image.
+      var dlg = document.getElementById("zoom"), img = document.getElementById("zoom-img"),
+          cap = document.getElementById("zoom-cap"), links = [].slice.call(document.querySelectorAll("a[data-zoom]")), at = 0;
+      if (!dlg.showModal) return;
+      function show(i) {
+        at = (i + links.length) % links.length;
+        var a = links[at];
+        img.src = a.href; img.width = a.dataset.w; img.height = a.dataset.h;
+        img.alt = a.querySelector("img").alt; cap.textContent = a.dataset.caption;
+      }
+      links.forEach(function (a, i) {
+        a.addEventListener("click", function (e) {
+          if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+          e.preventDefault(); show(i); dlg.showModal();
+        });
+      });
+      dlg.querySelector(".zoom-close").addEventListener("click", function () { dlg.close(); });
+      dlg.querySelector(".zoom-prev").addEventListener("click", function () { show(at - 1); });
+      dlg.querySelector(".zoom-next").addEventListener("click", function () { show(at + 1); });
+      dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+      dlg.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowLeft") show(at - 1);
+        if (e.key === "ArrowRight") show(at + 1);
+      });
+      dlg.addEventListener("close", function () { links[at].focus(); });
+
+      // Hovering a row in the log lights up its pin on the map, and the other way round.
+      var pins = {};
+      document.querySelectorAll(".map a.map-pin").forEach(function (p) { pins[p.getAttribute("href")] = p; });
+      document.querySelectorAll(".log a").forEach(function (row) {
+        var slug = row.getAttribute("href"), pin = pins[slug] || pins[slug.replace(/-\d+$/, "")];
+        if (!pin) return;
+        var on = function () { pin.classList.add("is-lit"); }, off = function () { pin.classList.remove("is-lit"); };
+        row.addEventListener("mouseenter", on); row.addEventListener("focus", on);
+        row.addEventListener("mouseleave", off); row.addEventListener("blur", off);
+      });
+    })();
+  </script>
+</body>
+</html>

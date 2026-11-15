@@ -1,5 +1,7 @@
 import os
+import re
 import unittest
+from pathlib import Path
 
 os.environ["LEDGERLY_FAST"] = "1"
 
@@ -27,6 +29,22 @@ class WebFlowTest(unittest.TestCase):
             r = self.c.get(url)
             self.assertEqual(r.status_code, 200, url)
             self.assertIn("Ledgerly", r.text)
+
+    def test_off_the_clock_page(self):
+        home = self.c.get("/")
+        self.assertIn('href="/off-the-clock"', home.text)
+        page = self.c.get("/off-the-clock")
+        self.assertEqual(page.status_code, 200)
+        from app.offclock import TRIPS
+        static = Path(__file__).resolve().parent.parent / "app" / "static"
+        for trip in TRIPS:
+            self.assertIn(f'id="{trip.slug}"', page.text)
+            for photo in trip.photos:
+                for tag in ("s", "l"):
+                    self.assertTrue((static / "img" / "offclock" / f"{photo.name}-{tag}.webp").is_file(), photo.name)
+        # every pin on the map points at a chapter that exists
+        for target in re.findall(r'class="map-pin" href="#([^"]+)"', page.text):
+            self.assertIn(f'id="{target}"', page.text)
 
     def test_sessions_are_isolated(self):
         other = TestClient(app)

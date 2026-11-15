@@ -21,6 +21,7 @@ from fastapi.templating import Jinja2Templates
 from .domain.accruals import EXPENSE_ACCOUNTS, VARIANCE_REASONS
 from .domain.models import CHART_OF_ACCOUNTS, POSTABLE_ACCOUNTS
 from .domain.reconciliation import KIND_TITLES
+from .offclock import TEASER, TRIPS
 from .state import SOURCES, DemoSession, SessionStore, SourceOffline, month, statement_pdf
 from .web.chart import balance_chart
 
@@ -116,7 +117,13 @@ def offline(request: Request, s: DemoSession, err: SourceOffline, new: bool = Fa
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Personal landing page; the demo lives under /demo."""
-    return templates.TemplateResponse(request, "home.html", {"site": site_url(request)})
+    return templates.TemplateResponse(request, "home.html", {"site": site_url(request), "teaser": TEASER})
+
+
+@app.get("/off-the-clock", response_class=HTMLResponse)
+async def off_the_clock(request: Request):
+    """Life outside work: trips, photos and a map. Deliberately styled as a different world from the home page."""
+    return templates.TemplateResponse(request, "offclock.html", {"site": site_url(request), "trips": TRIPS})
 
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
@@ -127,7 +134,7 @@ async def robots(request: Request):
 @app.get("/sitemap.xml")
 async def sitemap(request: Request):
     site = site_url(request)
-    urls = "".join(f"<url><loc>{site}{path}</loc></url>" for path in ("/", "/demo", "/about"))
+    urls = "".join(f"<url><loc>{site}{path}</loc></url>" for path in ("/", "/off-the-clock", "/demo", "/about"))
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
     return Response(xml, media_type="application/xml")
 

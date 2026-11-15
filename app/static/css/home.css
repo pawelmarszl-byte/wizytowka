@@ -247,6 +247,22 @@ section.work, section.bring, section.path, section.toolbox, section.beyond { pad
 .beyond-facts dt { font: 500 .72rem/1 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
 .beyond-facts dd { margin: 0; color: var(--ink-2); }
 
+/* teaser for /off-the-clock: three photos, the last one carries the call to action */
+.outside {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  position: relative; text-decoration: none; margin-top: 8px;
+}
+.outside img { width: 100%; height: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 4px; transition: scale .5s cubic-bezier(.2, .7, .2, 1); }
+.outside:hover img { scale: 1.02; }
+.outside img:last-of-type { object-position: 50% 12%; }
+.outside-cta {
+  position: absolute; right: 14px; bottom: 14px; padding: .8em 1.2em; border-radius: 999px;
+  background: #0b1216; color: #edf2f3; font: 600 .98rem/1 var(--f-display); display: grid; gap: 6px;
+  box-shadow: var(--shadow); transition: translate .18s ease;
+}
+.outside-cta small { font: 400 .7rem/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: #f2b84b; }
+.outside:hover .outside-cta { translate: 0 -3px; }
+
 /* contact */
 .contact { margin-top: 110px; background: var(--green); color: var(--on-green); }
 .contact-inner { padding-block: 88px 64px; display: grid; gap: 18px; justify-items: start; }
@@ -314,6 +330,8 @@ section.work, section.bring, section.path, section.toolbox, section.beyond { pad
   .figures p:nth-child(n + 3) { border-top: 1px solid var(--rule); }
   .bring-list, .side-grid, .beyond { grid-template-columns: 1fr; gap: 0 0; }
   .beyond { gap: 28px; }
+  .outside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .outside img:first-of-type { grid-column: 1 / -1; }
   .ledger-row { grid-template-columns: 1fr; gap: 6px; }
   .ledger-head { display: none; }
   .ledger-row > :last-child { padding-left: 16px; margin-top: 6px; }
