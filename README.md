@@ -38,7 +38,9 @@ idea**, built from scratch on invented data so anyone can try it.
 
 A *Things to try* checklist in the sidebar guides first-time visitors.
 
-The site root (`/`) is a personal page about the author, with Ledgerly as the featured project; the app itself lives under `/demo`.
+The site root (`/`) is a personal page about the author, with Ledgerly as the featured project and a downloadable
+CV; the app itself lives under `/demo`. A second personal page, [`/off-the-clock`](https://pawelmarszalek.onrender.com/off-the-clock),
+shows trips and photos in its own dark theme, with a map of Europe and a photo viewer.
 
 <p>
   <img src="docs/screenshots/statement-check.png" width="64%" alt="Statement that doesn't add up">
@@ -92,7 +94,8 @@ app/
     reconciliation.py bank vs. ledger comparison and correcting entries
     accruals.py      month-end accruals: settle, propose, book, roll-forward, sign-off
   state.py           per-visitor session: arrivals, outages, postings, missions
-  main.py            FastAPI routes: personal page at /, the demo at /demo (+ HTMX fragments)
+  offclock.py        content of /off-the-clock: trips, stories, photos and their layout
+  main.py            FastAPI routes: personal page at /, /off-the-clock, the demo at /demo (+ HTMX fragments)
   web/chart.py       server-side SVG chart
   templates/         Jinja2 pages and partials
   static/            CSS, a little JS, vendored htmx + lucide icons
@@ -111,6 +114,23 @@ uvicorn app.main:app --reload
 Tests: `python -m unittest discover tests` (set `LEDGERLY_FAST=1` to skip the simulated network delay; the
 web tests do this automatically).
 
+## Editing the Off the clock page
+
+All text and the order of photos live in `app/offclock.py`; the template and CSS don't need touching for a new photo.
+
+1. Save two WebP copies of the photo without metadata in `app/static/img/offclock/`: `<name>-s.webp` (long edge
+   900 px) and `<name>-l.webp` (long edge 2000 px). Originals stay out of the repo (`Zdjecia/` is git-ignored).
+2. Add a `Photo(name, (width, height) of the large copy, alt text, caption)` to the trip in `TRIPS`.
+3. Pick the trip's `layout`: `pair` / `trio` (one row, equal height), `solo` (one portrait beside the text),
+   `aside` (one landscape beside the text), `mosaic` (three landscapes, one large) or `with-map` (Istria route).
+   For more than one row set `rows`, e.g. `(2, 3)`.
+4. A new trip also needs a pin in `app/templates/partials/offclock_map.html` with `href="#<slug>"`.
+
+`tests/test_web.py` checks that every photo has both files and every map pin points at an existing chapter.
+
+The portrait on the home page is `app/static/img/author-{520,960}.{jpg,webp}` (square); the link preview card
+`og-card.jpg` contains the same photo and has to be updated with it.
+
 ## Deploy your own (free)
 
 1. Push this repo to GitHub.
@@ -119,7 +139,7 @@ web tests do this automatically).
 
 ## Tech
 
-Python 3.12 · FastAPI · Jinja2 · HTMX · fpdf2 · pypdf · SVG · GitHub Actions · Render
+Python 3.12 · FastAPI · Jinja2 · HTMX · fpdf2 · pypdf · SVG · CSS view transitions · GitHub Actions · Render
 
 ---
 
