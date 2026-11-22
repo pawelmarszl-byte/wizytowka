@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="preload" as="image" type="image/webp" imagesizes="(max-width: 860px) min(42vw, 200px), 440px"
+  <link rel="preload" as="image" type="image/webp" imagesizes="(max-width: 860px) 200px, 260px"
         imagesrcset="{{ asset('img/author-520.webp') }} 520w, {{ asset('img/author-960.webp') }} 960w">
   <link rel="stylesheet" href="{{ asset('css/home.css') }}">
   <script type="application/ld+json">
@@ -43,7 +43,12 @@
   </script>
   <script>
     try { const t = localStorage.getItem("ledgerly-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    // motion is on: the lanyard badge waits off stage until lanyard.js drops it in, and the scroll effects in
+    // home-motion.js start from their "before" state (home.css shows everything anyway if the scripts never run)
+    if (matchMedia("(prefers-reduced-motion: no-preference)").matches) document.documentElement.classList.add("js-motion");
   </script>
+  <script src="{{ asset('js/lanyard.js') }}" defer></script>
+  <script src="{{ asset('js/home-motion.js') }}" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -92,11 +97,42 @@
         </div>
       </div>
 
-      <figure class="hero-photo load" style="--d: 1.5">
-        <picture>
-          <source srcset="{{ asset('img/author-520.webp') }} 520w, {{ asset('img/author-960.webp') }} 960w" sizes="(max-width: 860px) min(42vw, 200px), 440px" type="image/webp">
-          <img src="{{ asset('img/author-960.jpg') }}" width="960" height="960" alt="Portrait of Paweł Marszałek">
-        </picture>
+      <figure class="hero-badge" id="badge-stage">
+        <!-- The ID badge hangs on a lanyard. Without JS (or with reduced motion) it simply hangs still;
+             home.html's script drops it from the top of the page and lets visitors drag it around. -->
+        <svg class="strap" id="strap" aria-hidden="true">
+          <path class="strap-band" id="strap-path" d=""/>
+          <text class="strap-text"><textPath href="#strap-path" id="strap-text" startOffset="0">PAWEŁ MARSZAŁEK · FINANCE &amp; AUTOMATION · PAWEŁ MARSZAŁEK · FINANCE &amp; AUTOMATION · PAWEŁ MARSZAŁEK · FINANCE &amp; AUTOMATION · PAWEŁ MARSZAŁEK · FINANCE &amp; AUTOMATION</textPath></text>
+        </svg>
+        <div class="badge-slot">
+          <div class="badge" id="badge">
+            <span class="badge-clip" aria-hidden="true"><i></i></span>
+            <div class="badge-band"><span class="badge-mark">PM</span><span>Staff · ID</span></div>
+            <picture class="badge-photo">
+              <source srcset="{{ asset('img/author-520.webp') }} 520w, {{ asset('img/author-960.webp') }} 960w" sizes="(max-width: 860px) 200px, 260px" type="image/webp">
+              <img src="{{ asset('img/author-520.jpg') }}" width="520" height="520" alt="Portrait of Paweł Marszałek" draggable="false">
+            </picture>
+            <div class="badge-body">
+              <p class="badge-name">Paweł Marszałek</p>
+              <p class="badge-role">Finance &amp; Process Automation</p>
+              <dl class="badge-fields">
+                <div><dt>Dept</dt><dd>GL · R2R</dd></div>
+                <div><dt>Base</dt><dd>Warsaw, PL</dd></div>
+                <div><dt>Since</dt><dd>2018</dd></div>
+              </dl>
+            </div>
+            <div class="badge-code" aria-hidden="true">
+              <svg viewBox="0 0 68 22" preserveAspectRatio="none">
+                {%- set ns = namespace(x=0) -%}
+                {%- for w in "2112312113211231121321131221231121131213" -%}
+                  {%- if loop.index is odd %}<rect x="{{ ns.x }}" width="{{ w }}" height="22"/>{% endif -%}
+                  {%- set ns.x = ns.x + (w | int) -%}
+                {%- endfor -%}
+              </svg>
+              <span>PM · 2018 · 0000</span>
+            </div>
+          </div>
+        </div>
         <figcaption class="entry" id="entry">
           <div class="entry-head"><span>Journal entry</span><span>2018 → today</span></div>
           <div class="entry-row"><span class="dc">Dr</span><span>Repetitive work</span></div>
@@ -108,10 +144,10 @@
 
     <!-- ============================================================ figures -->
     <section class="figures wrap" aria-label="In numbers">
-      <p><b>8+</b> years in accounting operations</p>
-      <p><b>5</b> companies, 2 countries</p>
-      <p><b>5</b> ERP systems in daily use</p>
-      <p><b>4</b> languages of code</p>
+      <p><b data-roll>8+</b> years in accounting operations</p>
+      <p><b data-roll>5</b> companies, 2 countries</p>
+      <p><b data-roll>5</b> ERP systems in daily use</p>
+      <p><b data-roll>4</b> languages of code</p>
     </section>
 
     <!-- ============================================================ featured work -->
@@ -157,8 +193,32 @@
       </div>
 
       <div class="work-foot reveal">
-        <img class="chart-peek" src="{{ asset('img/ledgerly-chart.webp') }}" width="1128" height="690" loading="lazy"
-             alt="Ledgerly chart comparing the bank balance and the ledger balance day by day">
+        <figure class="recon" id="recon" data-chart="{{ chart.data }}">
+          <div class="recon-head">
+            <span>Bank vs ledger · one month</span>
+            <span class="recon-diff">Difference <b id="recon-diff">{{ chart.diff }}</b><i aria-hidden="true">✓</i></span>
+          </div>
+          <svg viewBox="0 0 {{ chart.w }} {{ chart.h }}" role="img"
+               aria-label="Chart of a bank balance and a ledger balance over one month. The ledger drifts away in three places: a payment booked twice, an entry booked a day late and two swapped digits, leaving a difference of {{ chart.diff }}.">
+            {% for g in chart.grid %}
+            <line class="recon-grid" x1="{{ chart.x0 }}" x2="{{ chart.x1 }}" y1="{{ g.y }}" y2="{{ g.y }}"/>
+            <text class="recon-axis" x="{{ chart.x0 - 8 }}" y="{{ g.y }}" text-anchor="end">{{ g.label }}</text>
+            {% endfor %}
+            {% for d in chart.days %}<text class="recon-axis" x="{{ d.x }}" y="{{ chart.h - 8 }}" text-anchor="middle">Day {{ d.label }}</text>{% endfor %}
+            <path class="recon-gap" d="{{ chart.gap_d }}"/>
+            <path class="recon-bank" d="{{ chart.bank_d }}"/>
+            <path class="recon-ledger" d="{{ chart.ledger_d }}"/>
+            {% for m in chart.marks %}
+            <g class="recon-mark">
+              <line x1="{{ m.x }}" x2="{{ m.x }}" y1="{{ m.y + 4 }}" y2="{{ m.py }}"/>
+              <circle cx="{{ m.x }}" cy="{{ m.py }}" r="3.5"/>
+              <text x="{{ m.x }}" y="{{ m.y }}" text-anchor="middle">{{ m.label }}</text>
+            </g>
+            {% endfor %}
+          </svg>
+          <figcaption class="recon-legend"><span class="k-bank">Bank</span><span class="k-ledger">Ledger</span>
+            <span class="recon-note">Fictional numbers, the same kind of mistakes Ledgerly finds.</span></figcaption>
+        </figure>
         <div class="work-foot-text">
           <p class="note">Five minutes is enough: open a statement PDF, post one to the ledger, fix the four planted
             bookkeeping mistakes, then switch off the data warehouse and see what happens.</p>
@@ -203,34 +263,39 @@
           <span role="columnheader">Automated</span>
         </div>
         <div class="ledger-row" role="row">
-          <span class="when" role="cell">12.2025 – now</span>
+          <span class="when" role="cell">12.2025 – now<span class="stamp" aria-hidden="true">Posted</span></span>
           <span role="cell"><b>Subledger Data Analyst</b><small>Fintech, Warsaw</small>
             <em>Subledger-to-GL and multi-currency broker reconciliations.</em></span>
           <span class="auto" role="cell">An internal reconciliation panel in Python and SQL. Ledgerly is its public cousin.</span>
         </div>
         <div class="ledger-row" role="row">
-          <span class="when" role="cell">04.2025 – 11.2025</span>
+          <span class="when" role="cell">04.2025 – 11.2025<span class="stamp" aria-hidden="true">Posted</span></span>
           <span role="cell"><b>AP Accountant</b><small>Bausch &amp; Lomb, Warsaw</small>
             <em>Invoice posting, payment runs and vendor reconciliations in PeopleSoft.</em></span>
           <span class="auto" role="cell">JavaScript userscripts that fill in PeopleSoft forms on their own.</span>
         </div>
         <div class="ledger-row" role="row">
-          <span class="when" role="cell">08.2021 – 03.2025</span>
+          <span class="when" role="cell">08.2021 – 03.2025<span class="stamp" aria-hidden="true">Posted</span></span>
           <span role="cell"><b>AP Coordinator</b><small>Foot Locker, Utrecht (NL)</small>
             <em>Procure-to-pay across European entities, accruals, audit questions.</em></span>
           <span class="auto" role="cell">SQL Server reports on volumes, ageing and reconciliation status.</span>
         </div>
         <div class="ledger-row" role="row">
-          <span class="when" role="cell">07.2019 – 07.2021</span>
+          <span class="when" role="cell">07.2019 – 07.2021<span class="stamp" aria-hidden="true">Posted</span></span>
           <span role="cell"><b>Accounts Payable Specialist</b><small>CBRE, Warsaw</small>
             <em>Vendor reconciliations and multi-currency payments for international clients.</em></span>
           <span class="auto learned" role="cell">Learned SOX controls and how to prepare for an audit.</span>
         </div>
         <div class="ledger-row" role="row">
-          <span class="when" role="cell">04.2018 – 07.2019</span>
+          <span class="when" role="cell">04.2018 – 07.2019<span class="stamp" aria-hidden="true">Posted</span></span>
           <span role="cell"><b>Accounts Receivable Analyst</b><small>Accenture, Warsaw</small>
             <em>Bank and customer reconciliations, cash application.</em></span>
           <span class="auto learned" role="cell">Where the reconciliation habit began.</span>
+        </div>
+        <div class="ledger-row ledger-total" role="row" id="ledger-total">
+          <span class="when" role="cell">Balance</span>
+          <span role="cell"><b>8 years · 5 roles · 2 countries</b></span>
+          <span role="cell" class="total-diff">Difference <b>0.00</b> <i aria-hidden="true">✓</i></span>
         </div>
       </div>
       <p class="path-foot reveal">The full story is in my
@@ -322,6 +387,13 @@
           <div class="email">
             <a href="mailto:pawelmarszalek@g.pl" id="email-text">pawelmarszalek@g.pl</a>
             <button type="button" id="copy-email" class="copy-btn">Copy</button>
+            <div class="receipt" id="receipt" aria-hidden="true">
+              <p class="r-head">Receipt <span id="receipt-no">#0001</span></p>
+              <p class="r-line"><span>1 × email address</span><span>0.00</span></p>
+              <p class="r-mail">pawelmarszalek@g.pl</p>
+              <p class="r-line r-total"><span>Copied to clipboard</span><span>✓</span></p>
+              <p class="r-thanks">Thank you, talk soon</p>
+            </div>
             <span class="sr-only" id="copy-status" role="status" aria-live="polite"></span>
           </div>
         </div>
@@ -348,6 +420,7 @@
         var status = document.getElementById("copy-status");
         var done = function () {
           btn.textContent = "Copied"; status.textContent = "Email address copied";
+          if (window.printReceipt) window.printReceipt();
           setTimeout(function () { btn.textContent = "Copy"; status.textContent = ""; }, 1800);
         };
         var fallback = function () {

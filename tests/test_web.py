@@ -30,6 +30,21 @@ class WebFlowTest(unittest.TestCase):
             self.assertEqual(r.status_code, 200, url)
             self.assertIn("Ledgerly", r.text)
 
+    def test_home_motion_pieces(self):
+        home = self.c.get("/").text
+        # the badge, the chart (drawn by the server, unreconciled) and the receipt are all in the HTML
+        for needle in ('id="badge"', 'id="recon"', "-1,284.50", 'id="receipt"', 'id="ledger-total"'):
+            self.assertIn(needle, home)
+        from app.web.home_chart import MISTAKES, home_chart
+        chart = home_chart()
+        self.assertEqual(len(chart["marks"]), len(MISTAKES))
+        self.assertEqual(chart["diff"], "-1,284.50")
+        page = self.c.get("/off-the-clock").text
+        from app.offclock import TRIPS
+        for trip in TRIPS:
+            self.assertRegex(trip.tag_code, r"^[A-Z]{3}$")
+            self.assertIn(f"<b>{trip.tag_code}</b>", page)
+
     def test_off_the_clock_page(self):
         home = self.c.get("/")
         self.assertIn('href="/off-the-clock"', home.text)

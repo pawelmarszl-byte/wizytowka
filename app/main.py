@@ -24,6 +24,7 @@ from .domain.reconciliation import KIND_TITLES
 from .offclock import TEASER, TRIPS
 from .state import SOURCES, DemoSession, SessionStore, SourceOffline, month, statement_pdf
 from .web.chart import balance_chart
+from .web.home_chart import home_chart
 
 BASE = Path(__file__).parent
 COOKIE = "ledgerly_session"
@@ -114,10 +115,14 @@ def offline(request: Request, s: DemoSession, err: SourceOffline, new: bool = Fa
 # ------------------------------------------------------------------------- pages
 
 
+HOME_CHART = home_chart()
+
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Personal landing page; the demo lives under /demo."""
-    return templates.TemplateResponse(request, "home.html", {"site": site_url(request), "teaser": TEASER})
+    return templates.TemplateResponse(request, "home.html", {"site": site_url(request), "teaser": TEASER,
+                                                                  "chart": HOME_CHART})
 
 
 @app.get("/off-the-clock", response_class=HTMLResponse)

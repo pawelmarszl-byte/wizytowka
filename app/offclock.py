@@ -8,6 +8,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
+# nearest airport to each trip, for the luggage tags (decorative: not necessarily where the trip flew to)
+TAG_CODES = {"georgia": "KUT", "austria": "INN", "switzerland": "ZRH", "bieszczady": "RZE", "dolomites": "BZO",
+             "istria": "TRS", "france": "GVA", "norway": "TOS", "slovenia": "LJU"}
+
+
 @dataclass(frozen=True)
 class Photo:
     name: str
@@ -37,6 +42,11 @@ class Trip:
     # | mosaic (three landscapes: one large, two stacked beside it)
     layout: str = "pair"
     rows: tuple[int, ...] = ()  # photos per row; empty means all of them in one row
+
+    @property
+    def tag_code(self) -> str:
+        """Three letters for the luggage tag on the trip: the nearest airport's code, as on a real bag tag."""
+        return TAG_CODES.get(self.slug.split("-")[0], self.slug[:3].upper())
 
     @property
     def photo_rows(self) -> tuple[tuple[Photo, ...], ...]:

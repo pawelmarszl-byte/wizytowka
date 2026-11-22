@@ -86,7 +86,7 @@ p { margin: 0; }
 .btn-paper-line:hover { background: color-mix(in srgb, var(--on-green) 16%, transparent); }
 
 /* ------------------------------------------------------------------ top bar */
-.topbar { display: flex; align-items: center; gap: 24px; padding-block: 22px; }
+.topbar { position: relative; z-index: 2; display: flex; align-items: center; gap: 24px; padding-block: 22px; }
 .mono-mark {
   font: 700 1rem/1 var(--f-mono); text-decoration: none; border: 1.5px solid var(--ink); padding: 8px 9px; border-radius: 6px;
 }
@@ -119,17 +119,71 @@ p { margin: 0; }
 .lede { font-size: var(--step-1); line-height: 1.5; color: var(--ink-2); max-width: 34ch; margin-top: 22px; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
 
-.hero-photo { margin: 0; position: relative; justify-self: end; width: min(100%, 440px); }
-.hero-photo picture img {
-  width: 100%; aspect-ratio: 1; object-fit: cover; object-position: 50% 30%; border-radius: 4px;
-  box-shadow: var(--shadow);
+/* ID badge on a lanyard. Default (no JS / reduced motion): it hangs still under a short CSS strap.
+   With JS, home.html adds .is-live: the SVG strap takes over and the card is moved by transform only. */
+.hero-badge {
+  --badge-w: 270px; --strap-w: 16px; --clip-h: 30px;
+  margin: 0 0 90px; position: relative; justify-self: end; width: min(100%, 440px);
 }
-.hero-photo picture { display: block; position: relative; }
-.hero-photo picture::before {
-  content: ""; position: absolute; inset: 14px -14px -14px 14px; border: 1.5px solid var(--green); border-radius: 4px; z-index: -1;
+.hero-badge .entry { left: -30px; bottom: -118px; }
+.badge-slot { display: flex; justify-content: flex-end; padding: 64px 76px 0 0; } /* keeps the strap clear of the top-bar buttons */
+.badge {
+  position: relative; z-index: 1; width: var(--badge-w); padding-bottom: 1em;
+  font-size: calc(var(--badge-w) / 270 * 16); /* everything inside scales with the card */
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 1em; box-shadow: var(--shadow);
+  transform-origin: 50% calc(-1 * var(--clip-h)); /* the top of the clip, where the strap holds it */
+  touch-action: none; user-select: none; -webkit-user-select: none;
 }
+.hero-badge.is-live .badge { cursor: grab; will-change: transform; }
+.badge.is-dragging { cursor: grabbing; z-index: 3; }
+.badge::before { /* static strap, replaced by the SVG one when live */
+  content: ""; position: absolute; left: calc(50% - var(--strap-w) / 2); bottom: calc(100% + var(--clip-h) - 4px);
+  width: var(--strap-w); height: 50vh; background: var(--green); border-radius: 3px;
+}
+.hero-badge.is-live .badge::before { display: none; }
+.badge-clip {
+  position: absolute; left: 50%; top: calc(-1 * var(--clip-h)); translate: -50% 0;
+  width: 22px; height: calc(var(--clip-h) + 16px); border-radius: 7px 7px 5px 5px;
+  background: linear-gradient(90deg, #8b9690, #e3e8e5 45%, #9aa59f 80%, #7d8882);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+}
+.badge-clip i { /* the ring the strap loops through */
+  position: absolute; left: 50%; top: -7px; translate: -50% 0; width: 14px; height: 12px;
+  border: 3px solid #a3aea8; border-bottom: 0; border-radius: 8px 8px 0 0;
+}
+.badge-band {
+  position: relative; display: flex; justify-content: space-between; align-items: flex-end;
+  height: 3.6em; padding: 0 1em .7em; border-radius: calc(1em - 1px) calc(1em - 1px) 0 0;
+  background: var(--green); color: var(--on-green);
+  font: 500 .66em/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase;
+}
+.badge-band::before { /* the punched slot the clip goes through */
+  content: ""; position: absolute; left: 50%; top: .55em; translate: -50% 0; width: 3.4em; height: .7em;
+  border-radius: 1em; background: var(--paper); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+}
+.badge-mark { font-weight: 500; font-size: 1.35em; letter-spacing: 0; border: 1.5px solid currentColor; border-radius: 5px; padding: 4px 5px 3px; }
+.badge-photo img {
+  width: calc(100% - 2em); margin: 1em 1em 0; aspect-ratio: 1 / .9; object-fit: cover; object-position: 50% 30%;
+  border-radius: .45em; pointer-events: none;
+}
+.badge-body { padding: .85em 1em 0; }
+.badge-name { font: 800 1.42em/1.1 var(--f-display); letter-spacing: -.025em; }
+.badge-role { margin-top: .4em; font: 500 .64em/1.3 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--green); }
+.badge-fields { display: grid; grid-template-columns: 1.35fr 1fr .6fr; gap: .6em; margin: .9em 0 0; padding-top: .7em; border-top: 1px solid var(--rule); }
+.badge-fields dt { font: 500 .56em/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.badge-fields dd { margin: .25em 0 0; font: 500 .7em/1.25 var(--f-mono); color: var(--ink); }
+.badge-code { display: flex; align-items: center; gap: .8em; margin: .9em 1em 0; }
+.badge-code svg { width: 55%; height: 1.6em; fill: var(--ink); }
+.badge-code span { font: 400 .56em/1.2 var(--f-mono); letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+.strap { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; display: none; }
+.hero-badge.is-live .strap { display: block; }
+.strap-band { fill: none; stroke: var(--green); stroke-width: var(--strap-w); stroke-linecap: butt; stroke-linejoin: round; }
+.strap-text { font: 500 8.5px/1 var(--f-mono); letter-spacing: .14em; fill: var(--on-green); dominant-baseline: central; }
+/* while the script gets ready the card waits off stage; if the script never runs it shows up anyway */
+.js-motion .hero-badge:not(.is-live) .badge { opacity: 0; animation: badge-fallback 0s 2.5s forwards; }
+@keyframes badge-fallback { to { opacity: 1; } }
 .entry {
-  position: absolute; left: -48px; bottom: -34px; width: 270px; padding: 12px 14px 10px;
+  position: absolute; z-index: 2; left: -48px; bottom: -34px; width: 270px; padding: 12px 14px 10px;
   background: var(--sheet); border-radius: 4px; box-shadow: var(--shadow);
   font: 400 .8rem/1.4 var(--f-mono); color: var(--ink);
 }
@@ -192,7 +246,35 @@ section.work, section.bring, section.path, section.toolbox, section.beyond { pad
 .steps h3 { font-size: var(--step-1); font-weight: 700; line-height: 1.25; margin-bottom: 6px; }
 .steps p { color: var(--ink-2); }
 .work-foot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; margin-top: 56px; }
-.chart-peek { border-radius: 10px; border: 1px solid var(--rule); box-shadow: var(--shadow); }
+/* bank vs ledger chart: drawn by the server with the mistakes in; home-motion.js draws it in and fixes them */
+.recon { margin: 0; padding: 14px 16px 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); }
+.recon-head { display: flex; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; font: 500 .72rem/1.4 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.recon-diff b { color: var(--red); font-weight: 500; font-variant-numeric: tabular-nums; margin-left: .4em; }
+.recon-diff i { font-style: normal; color: var(--green); margin-left: .35em; display: inline-block; visibility: hidden; }
+.recon.is-balanced .recon-diff b { color: var(--green); }
+.recon.is-balanced .recon-diff i { visibility: visible; animation: stamp .55s cubic-bezier(.3, 1.7, .5, 1) both; }
+.recon svg { display: block; width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+.recon-grid { stroke: var(--rule); stroke-width: 1; }
+.recon-axis { font: 400 10px var(--f-mono); fill: var(--muted); dominant-baseline: middle; }
+.recon-gap { fill: var(--red); opacity: .14; }
+.recon-bank, .recon-ledger { fill: none; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.recon-bank { stroke: var(--ink); }
+.recon-ledger { stroke: var(--green); }
+.recon-mark { transition: opacity .4s; }
+.recon-mark.is-fixed { opacity: 0; }
+.recon-mark line { stroke: var(--red); stroke-width: 1; stroke-dasharray: 2 2; }
+.recon-mark circle { fill: var(--red); }
+.recon-mark text { font: 500 10.5px var(--f-mono); fill: var(--red); paint-order: stroke; stroke: var(--sheet); stroke-width: 4px; stroke-linejoin: round; }
+.recon-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; margin-top: 6px; font: 400 .72rem/1.4 var(--f-mono); color: var(--ink-2); }
+.recon-legend .k-bank::before, .recon-legend .k-ledger::before {
+  content: ""; display: inline-block; width: 14px; height: 2.5px; margin-right: 6px; vertical-align: middle; background: var(--ink);
+}
+.recon-legend .k-ledger::before { background: var(--green); }
+.recon-note { color: var(--muted); }
+.recon-replay {
+  font: 500 .72rem/1 var(--f-mono); color: var(--green); background: none; border: 0; padding: 4px 0; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px;
+}
 .work-foot-text { display: grid; gap: 20px; justify-items: start; }
 .note { font-size: var(--step-1); line-height: 1.45; font-style: italic; color: var(--ink); max-width: 36ch; }
 .tech { font: 400 .8rem/1.6 var(--f-mono); color: var(--muted); }
@@ -226,7 +308,25 @@ section.work, section.bring, section.path, section.toolbox, section.beyond { pad
 .path-foot { margin-top: 22px; color: var(--ink-2); }
 .path-foot a { color: var(--green); font-weight: 500; text-underline-offset: 4px; }
 .path-foot .tag { font: 400 .78rem/1 var(--f-mono); color: var(--muted); margin-left: 4px; white-space: nowrap; }
-.ledger-row:not(.ledger-head):hover { background: linear-gradient(to right, transparent, var(--green-soft) 30%, transparent); }
+/* "posted" stamps: always there; with motion on they land one by one as the rows scroll in */
+.stamp {
+  display: block; width: max-content; margin-top: 8px; padding: 3px 7px 2px; rotate: -6deg;
+  font: 500 .62rem/1.2 var(--f-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--green); border: 1.5px solid currentColor; border-radius: 4px; opacity: .85;
+}
+.js-motion .ledger-row:not(.is-posted) .stamp { opacity: 0; }
+.js-motion .ledger-row.is-posted .stamp { animation: stamp-in .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes stamp-in { from { opacity: 0; scale: 2.4; } to { opacity: .85; scale: 1; } }
+.ledger-total { border-bottom: 3px double var(--ink); }
+.ledger-total .when { text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; color: var(--muted); padding-top: 5px; }
+.total-diff { font: 500 .9rem/1.5 var(--f-mono); color: var(--ink-2); padding-top: 2px; }
+.ledger-row .total-diff b { display: inline; font: inherit; color: var(--green); }
+.total-diff i { font-style: normal; color: var(--green); display: inline-block; }
+.js-motion .ledger-total:not(.is-balanced) .total-diff i { visibility: hidden; }
+.js-motion .ledger-total.is-balanced .total-diff i { animation: stamp .55s cubic-bezier(.3, 1.7, .5, 1) both; }
+.js-motion .ledger-total.is-balanced { animation: total-flash 1.4s ease-out; }
+@keyframes total-flash { 0%, 30% { background: var(--green-soft); } 100% { background: transparent; } }
+.ledger-row:not(.ledger-head):not(.ledger-total):hover { background: linear-gradient(to right, transparent, var(--green-soft) 30%, transparent); }
 
 /* toolbox */
 .tool-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
@@ -278,6 +378,34 @@ section.work, section.bring, section.path, section.toolbox, section.beyond { pad
   font: 600 .85rem/1 var(--f-display); padding: .65em 1em; border-radius: 999px; border: 0; cursor: pointer;
   background: color-mix(in srgb, var(--on-green) 16%, transparent); color: inherit;
 }
+.email { position: relative; }
+/* the receipt that prints out of the email pill when the address is copied (home-motion.js) */
+.receipt {
+  --zig: 9px;
+  position: absolute; right: 10px; top: calc(100% - 4px); z-index: 3; width: 230px; padding: 14px 16px calc(12px + var(--zig));
+  background: #fbfbf6; color: #1b211d; font: 400 .74rem/1.5 var(--f-mono); visibility: hidden; pointer-events: none;
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .3));
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--zig) 100%;
+}
+.receipt p { margin: 0; }
+.receipt .r-head { text-align: center; text-transform: uppercase; letter-spacing: .14em; font-weight: 500; padding-bottom: 6px; border-bottom: 1px dashed #9aa39d; margin-bottom: 6px; }
+.receipt .r-line { display: flex; justify-content: space-between; gap: 8px; }
+.receipt .r-mail { font-size: .7rem; color: #4e5a53; padding-left: 1.2em; }
+.receipt .r-total { border-top: 1px dashed #9aa39d; margin-top: 6px; padding-top: 6px; font-weight: 500; }
+.receipt .r-total span:last-child { color: #1c6a4e; }
+.receipt .r-thanks { text-align: center; margin-top: 8px; color: #6b746e; font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; }
+.receipt.is-printing, .receipt.is-torn { visibility: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  .receipt.is-printing { animation: print 1.1s steps(9, end) both; }
+  .receipt.is-torn { animation: tear .7s cubic-bezier(.5, 0, .9, .4) both; }
+}
+@media (prefers-reduced-motion: reduce) { .receipt.is-torn { visibility: hidden; } }
+@keyframes print { from { translate: 0 -100%; clip-path: inset(100% 0 0 0); } to { translate: 0 0; clip-path: inset(0 0 0 0); } }
+@keyframes tear { from { translate: 0 0; rotate: 0deg; opacity: 1; } to { translate: 30px 140px; rotate: 14deg; opacity: 0; } }
+/* odometer digits in the figures strip (home-motion.js builds them) */
+.roll { display: inline-block; height: 1.1em; overflow: hidden; vertical-align: top; }
+.roll-strip { display: flex; flex-direction: column; transition: translate 1.8s cubic-bezier(.15, .75, .2, 1); }
+.roll-strip span { height: 1.1em; line-height: 1.1; }
 .copy-btn:hover { background: color-mix(in srgb, var(--on-green) 26%, transparent); }
 .foot {
   display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 22px 28px;
@@ -316,11 +444,14 @@ section.work, section.bring, section.path, section.toolbox, section.beyond { pad
   .topbar { flex-wrap: wrap; row-gap: 14px; }
   .topnav { order: 3; width: 100%; margin-left: 0; gap: 22px; padding-top: 12px; border-top: 1px solid var(--rule); }
   .hero { grid-template-columns: 1fr; gap: 28px; padding-block: 8px 32px; }
-  .hero-photo {
+  .hero-badge {
+    --badge-w: min(48vw, 200px); --strap-w: 13px; --clip-h: 24px;
     order: -1; justify-self: stretch; width: 100%;
-    display: grid; grid-template-columns: min(42%, 200px) minmax(0, 1fr); gap: 22px; align-items: end;
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: end;
   }
-  .hero-photo picture::before { inset: 8px -8px -8px 8px; }
+  .badge-slot { padding: 44px 0 0; }
+  .hero-badge { margin: 0; }
+  .badge-clip { width: 18px; }
   .entry { position: static; width: auto; max-width: 270px; padding: 10px 12px 8px; font-size: .72rem; }
   .entry-head { font-size: .62rem; letter-spacing: .03em; white-space: nowrap; }
   .entry-row { height: auto; min-height: 26px; padding-block: 4px; grid-template-columns: 24px 1fr; }
@@ -336,11 +467,17 @@ section.work, section.bring, section.path, section.toolbox, section.beyond { pad
   .ledger-head { display: none; }
   .ledger-row > :last-child { padding-left: 16px; margin-top: 6px; }
   .ledger-row > :last-child::before { top: 0; bottom: 0; }
+  .when .stamp { display: inline-block; margin: 0 0 0 12px; vertical-align: 1px; }
+  .receipt { right: auto; left: 0; }
   section.work, section.bring, section.path, section.toolbox, section.beyond { padding-block: 72px 0; }
 }
 @media (max-width: 480px) {
+  .recon { padding: 12px 12px 10px; }
+  .recon-axis { font-size: 16px; }
+  .recon-mark text { font-size: 17px; stroke-width: 6px; }
+  .recon-mark circle { r: 5px; }
   .topbar { gap: 12px; }
-  .hero-photo { gap: 18px; }
+  .hero-badge { gap: 16px; }
   .entry-head span:last-child { display: none; }
   .tool-grid { grid-template-columns: 1fr; }
   .btn { padding: .78em 1.1em; }

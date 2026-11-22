@@ -20,6 +20,7 @@
   <link rel="preload" as="image" type="image/webp" imagesizes="100vw"
         imagesrcset="{{ asset('img/offclock/bieszczady-1-s.webp') }} 900w, {{ asset('img/offclock/bieszczady-1-l.webp') }} 2000w">
   <link rel="stylesheet" href="{{ asset('css/offclock.css') }}">
+  <script src="{{ asset('js/offclock-motion.js') }}" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -68,6 +69,12 @@
     <!-- ============================================================ chapters -->
     {% for t in trips %}
     <section class="trip wrap layout-{{ t.layout }}" id="{{ t.slug }}" aria-labelledby="{{ t.slug }}-title">
+      <div class="lug" aria-hidden="true">
+        <div class="lug-swing">
+          <span class="lug-string"></span>
+          <div class="lug-tag"><span class="lug-hole"></span><b>{{ t.tag_code }}</b><small>{{ t.when }}</small></div>
+        </div>
+      </div>
       <div class="trip-head">
         <p class="trip-meta"><span>{{ t.when }}</span><span>{{ t.country }}</span><span>{{ t.activity }}</span></p>
         <h2 id="{{ t.slug }}-title">{{ t.place }}</h2>

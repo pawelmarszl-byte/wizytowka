@@ -42,6 +42,12 @@ The site root (`/`) is a personal page about the author, with Ledgerly as the fe
 CV; the app itself lives under `/demo`. A second personal page, [`/off-the-clock`](https://pawelmarszalek.onrender.com/off-the-clock),
 shows trips and photos in its own dark theme, with a map of Europe and a photo viewer.
 
+Both pages have a few small, dependency-free animations on the same theme: an ID badge that drops in on a lanyard
+and can be dragged around (2D Verlet physics), figures that roll in like an adding machine, roles that get a
+POSTED stamp, a bank-vs-ledger chart that fixes its own mistakes, a receipt when you copy the email address, and
+luggage tags that sway as you scroll the trips. With `prefers-reduced-motion` or without JS everything is shown
+still, in its final state.
+
 <p>
   <img src="docs/screenshots/statement-check.png" width="64%" alt="Statement that doesn't add up">
   <img src="docs/screenshots/mobile.png" width="22%" alt="Mobile view">
@@ -97,8 +103,9 @@ app/
   offclock.py        content of /off-the-clock: trips, stories, photos and their layout
   main.py            FastAPI routes: personal page at /, /off-the-clock, the demo at /demo (+ HTMX fragments)
   web/chart.py       server-side SVG chart
+  web/home_chart.py  the small bank-vs-ledger chart on the personal page
   templates/         Jinja2 pages and partials
-  static/            CSS, a little JS, vendored htmx + lucide icons
+  static/            CSS, a little JS (lanyard.js, home-motion.js, offclock-motion.js), vendored htmx + lucide icons
 tests/               domain, HTTP flow, and a "no real company names" guard
 ```
 

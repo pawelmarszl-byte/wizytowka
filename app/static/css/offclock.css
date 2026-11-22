@@ -100,7 +100,40 @@ p { margin: 0; }
 .log-what { grid-column: 2; font: 400 .76rem/1.4 var(--f-mono); color: var(--amber); }
 
 /* ------------------------------------------------------------------ trips */
-.trip { padding-block: 112px 0; scroll-margin-top: 8px; }
+.trip { padding-block: 112px 0; scroll-margin-top: 8px; position: relative; }
+
+/* luggage tag hanging at the top right of every trip; offclock-motion.js makes it sway as the page scrolls */
+.lug { position: absolute; top: 0; right: max(40px, env(safe-area-inset-right, 0px)); width: 64px; pointer-events: none; }
+.lug::before { /* the nail */
+  content: ""; position: absolute; left: 50%; top: -3px; translate: -50% 0; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--mist); box-shadow: 0 0 0 2px var(--night);
+}
+.lug-swing { transform-origin: 50% 0; pointer-events: auto; }
+.lug-string { display: block; width: 1.5px; height: 24px; margin-inline: auto; background: color-mix(in srgb, var(--mist) 70%, transparent); }
+.lug-tag {
+  position: relative; display: grid; justify-items: center; gap: 2px; margin-top: -6px; padding: 22px 6px 14px;
+  background: #e6d3a7; color: #1d1a12; box-shadow: 0 10px 20px -10px rgba(0, 0, 0, .7);
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%, 0 16px);
+}
+.lug-tag::after { /* a strip of airline-style bars at the bottom */
+  content: ""; position: absolute; left: 8px; right: 8px; bottom: 6px; height: 4px;
+  background: repeating-linear-gradient(90deg, #1d1a12 0 2px, transparent 2px 4px, #1d1a12 4px 5px, transparent 5px 8px);
+  opacity: .55;
+}
+.lug-hole {
+  position: absolute; top: 6px; left: 50%; translate: -50% 0; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--night); box-shadow: 0 0 0 2.5px #c4ab72;
+}
+.lug-tag b { font: 800 1.15rem/1 var(--f-display); letter-spacing: .02em; }
+.lug-tag small { font: 500 .56rem/1.2 var(--f-mono); letter-spacing: .04em; color: #5b533f; }
+
+/* the map: lines from home to every trip, drawn in once the map scrolls into view */
+.map-arc {
+  fill: none; stroke: var(--amber); stroke-width: 1.2; stroke-linecap: round; opacity: .5;
+  stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.2s cubic-bezier(.5, 0, .2, 1), opacity .2s, stroke-width .2s;
+}
+.map-arcs.is-drawn .map-arc { stroke-dashoffset: 0; }
+.map-arc.is-lit { opacity: 1; stroke-width: 2.2; }
 .trip-head { display: grid; gap: 12px; max-width: 720px; margin-bottom: 32px; }
 .trip-meta { display: flex; flex-wrap: wrap; gap: 6px 0; font: 400 .8rem/1.4 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dusk); }
 .trip-meta span + span::before { content: "/"; margin-inline: .7em; color: var(--line); }
@@ -199,6 +232,7 @@ p { margin: 0; }
   .map-pin-dot { r: 7px; }
   .map-pin-halo { r: 16px; }
   .trip { padding-top: 80px; }
+  .lug { right: max(18px, env(safe-area-inset-right, 0px)); scale: .8; transform-origin: 50% 0; }
   .frames { flex-direction: column; gap: 22px; }
   .layout-mosaic .frames { display: flex; }
   .layout-mosaic .frame:first-child img { height: auto; }
